@@ -140,7 +140,27 @@ export default function PassbookPage() {
         const mainAccount = accounts.find(acc => acc.type === 'Savings' || acc.type === 'Sampann current');
         if (!mainAccount) throw new Error("Main account not found");
         
-        const doc = new jsPDF('p', 'pt', 'a4');
+        // Encrypt the PDF using the customer's statement password: first four letters of name (lowercase) + DOB (DDMMYYYY).
+        const namePrefix = String(user.name || '').replace(/[^a-z]/gi, '').slice(0, 4).toLowerCase();
+        const dobRaw = String(user.dob || '').trim();
+        let dobDigits = '';
+        const dmyMatch = dobRaw.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);
+        const isoMatch = dobRaw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (dmyMatch) dobDigits = `${dmyMatch[1]}${dmyMatch[2]}${dmyMatch[3]}`;
+        else if (isoMatch) dobDigits = `${isoMatch[3]}${isoMatch[2]}${isoMatch[1]}`;
+        else if (/^\d{8}$/.test(dobRaw)) dobDigits = dobRaw;
+        if (namePrefix.length < 4 || !/^\d{8}$/.test(dobDigits)) {
+          throw new Error('Add the customer name and date of birth in Settings before downloading a password-protected statement.');
+        }
+        const statementPassword = `${namePrefix}${dobDigits}`;
+        const doc = new jsPDF({
+          orientation: 'p', unit: 'pt', format: 'a4',
+          encryption: {
+            userPassword: statementPassword,
+            ownerPassword: `${statementPassword}-${crypto.randomUUID()}`,
+            userPermissions: ['print', 'copy', 'modify', 'annot-forms'],
+          },
+        } as any);
         const FONT = 'Helvetica';
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
