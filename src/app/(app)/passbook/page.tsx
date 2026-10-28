@@ -222,7 +222,7 @@ export default function PassbookPage() {
             head: [['Customer ID', 'A/c No', 'A/c Type', 'Variant', 'Nominee']],
             body: [[user.customerId, mainAccount.accountNumber, mainAccount.type, 'Sampann Current Account', mainAccount.nominee || 'Registered']],
             headStyles: { fillColor: [58, 58, 177], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-            bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0], font: FONT, halign: 'center' },
+            bodyStyles: { fontStyle: 'normal', textColor: [0, 0, 0], font: FONT, halign: 'center' },
             styles: { fontSize: 9, cellPadding: 5, font: FONT, lineColor: [0, 0, 0], lineWidth: 1.0 },
             theme: 'grid'
         });
