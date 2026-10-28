@@ -75,6 +75,7 @@ function AddBeneficiaryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
       id: `payee_${Date.now()}`,
       avatar: '',
       ...data,
+      upiId: data.upiId || '',
     };
     
     setAppData({

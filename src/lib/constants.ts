@@ -1,3 +1,4 @@
+import defaultAppSettings from './default-app-settings.json';
 
 import type { AppData } from './types';
 
@@ -167,36 +168,5 @@ export const initialData: AppData = {
       timestamp: new Date(Date.now() - 45000).toISOString(),
     },
   ],
-  appSettings: {
-    loginBanner: 'https://placehold.co/600x400.png',
-    getStatementBanner: 'https://storage.googleapis.com/project-ix-prod-upload/634a5d89-2131-47de-824a-a7a2b16b3b8d.png',
-    promoBanners: [
-      {
-        id: 'promo_1',
-        image: 'https://placehold.co/600x300.png',
-        link: '/fixed-deposit',
-      },
-      {
-        id: 'promo_2',
-        image: 'https://placehold.co/600x300.png',
-        link: '/recurring-deposit',
-      },
-    ],
-    dashboardBanner: 'https://placehold.co/600x150.png',
-    appLogo: `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGRkZGRkYiLz4KPHBhdGggZD0iTTIwIDZMMjQuMjY2IDE0LjQyMDdIMzQuNzY2OEwyNi43NTA0IDE5LjYxMjZMMjkuODY2IDI5LjE2NjdMMjAgMjMuNzVMMTAuMTMzOSAyOS4xNjY3TDEzLjI0OTYgMTkuNjEyNkw1LjIzMzIgMTQuNDIwN0gxNS43MzRIMjBaIiBmaWxsPSIjRDQxRTQ0Ii8+Cjwvc3ZnPgo=`,
-    appLogo2: `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjAwMDIgMC4zMzMzMTNMMTIuNTY2OCA3LjYzMzMxSDE5LjY2NjhMMTQuMDUwMiAxMi4xNjY2TDE2LjE4MzUgMTkuNjY2NkwxMC4wMDAyIDE1TDMuODE2ODMgMTkuNjY2Nkw1Ljk1MDE2IDEyLjE2NjZMMC4zMzM0OTYgNy42MzMzMUg3LjQzMzVMMTAuMDAwMiAwLjMzMzMxM1oiIGZpbGw9IiNENDE0NDQiLz4KPC9zdmc+Cg==`,
-    messageAvatar: 'https://placehold.co/40x40.png',
-    qrCodeImage: 'https://placehold.co/200x200.png',
-    personalLoanBanner: 'https://placehold.co/400x200.png',
-    twoWheelerLoanBanner: 'https://placehold.co/400x200.png',
-    statementHeaderBanner: 'https://placehold.co/400x100.png',
-    statementMiddleBanner: 'https://placehold.co/800x200.png',
-    transactionLimits: {
-      fino: 1000000,
-      imps: 500000,
-      neft: 1000000,
-      rtgs: 1000000,
-      upg: 1000000,
-    }
-  },
+  appSettings: defaultAppSettings,
 };

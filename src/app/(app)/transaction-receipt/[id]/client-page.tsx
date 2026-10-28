@@ -26,7 +26,7 @@ export default function TransactionReceiptClientPage({ transactionId, onDone }: 
   const { appData } = useAppData();
   
   const transaction = appData.transactions.find(t => t.id === transactionId);
-  const fromAccount = appData.accounts.find(a => a.type === 'Savings' || a.type === 'Sampaan current');
+  const fromAccount = appData.accounts.find(a => a.type === 'Savings' || a.type === 'Sampann current');
   const payee = appData.payees.find(p => p.name === transaction?.to);
 
   if (!transaction || !fromAccount) {

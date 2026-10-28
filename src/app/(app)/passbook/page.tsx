@@ -303,7 +303,22 @@ export default function PassbookPage() {
         }
 
 
-        doc.save(`fino-pay-statement-${new Date().toISOString().split('T')[0]}.pdf`);
+        const accountDigits = String(mainAccount.accountNumber || '').replace(/\D/g, '');
+        const filename = `FINOPAY_STMT_XX${accountDigits.slice(-4).padStart(4, '0')}_${format(new Date(), 'ddMMyyyy')}.pdf`;
+        const pdfDataUri = doc.output('datauristring');
+        const downloadForm = document.createElement('form');
+        downloadForm.method = 'POST';
+        downloadForm.action = '/api/download-pdf';
+        downloadForm.enctype = 'multipart/form-data';
+        downloadForm.target = 'fino-pdf-download-frame';
+        downloadForm.style.display = 'none';
+        const dataInput = document.createElement('input'); dataInput.type = 'hidden'; dataInput.name = 'pdfData'; dataInput.value = pdfDataUri;
+        const nameInput = document.createElement('input'); nameInput.type = 'hidden'; nameInput.name = 'filename'; nameInput.value = filename;
+        downloadForm.append(dataInput, nameInput);
+        let downloadFrame = document.querySelector<HTMLIFrameElement>('#fino-pdf-download-frame');
+        if (!downloadFrame) { downloadFrame = document.createElement('iframe'); downloadFrame.id = 'fino-pdf-download-frame'; downloadFrame.name = 'fino-pdf-download-frame'; downloadFrame.style.display = 'none'; document.body.appendChild(downloadFrame); }
+        document.body.appendChild(downloadForm); downloadForm.submit(); downloadForm.remove();
+        window.setTimeout(() => downloadFrame?.remove(), 120000);
         
         toast({
             title: "Download Complete",

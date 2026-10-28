@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronUp, Trash2, Upload, Download, Loader2, PlusCircle, RefreshCw, Link as LinkIcon, Copy, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { extractTransactionsFromPdf } from '@/ai/flows/extract-transactions-from-pdf-flow';
+import { parseFinoStatement, applyStatementToAppData, type ParsedStatement } from '@/lib/statement-import';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -97,6 +97,7 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const [localData, setLocalData] = useState<AppData>(appData);
     const [isExtracting, setIsExtracting] = useState(false);
+    const [parsedStatement, setParsedStatement] = useState<ParsedStatement | null>(null);
     const importRef = useRef<HTMLInputElement>(null);
     const [adjustmentAmounts, setAdjustmentAmounts] = useState<Record<string, number>>({});
     const [exportLink, setExportLink] = useState('');
@@ -286,38 +287,36 @@ export default function SettingsPage() {
     const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-
+        if (file.size > 20 * 1024 * 1024) {
+            toast({ variant: 'destructive', title: 'PDF too large', description: 'Please choose a statement under 20 MB.' });
+            event.target.value = '';
+            return;
+        }
         setIsExtracting(true);
-        toast({ title: "Processing PDF...", description: "AI is extracting transactions. This may take a moment." });
+        setParsedStatement(null);
+        try {
+            const parsed = await parseFinoStatement(await file.arrayBuffer());
+            setParsedStatement(parsed);
+            toast({ title: 'Statement extracted', description: `${parsed.transactions.length} transactions found. Review the details and choose an import action.` });
+        } catch (error) {
+            console.error('PDF extraction failed', error);
+            toast({ variant: 'destructive', title: 'Extraction failed', description: error instanceof Error ? error.message : 'Could not read this statement PDF.' });
+        } finally {
+            setIsExtracting(false);
+            event.target.value = '';
+        }
+    };
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const pdfDataUri = e.target?.result as string;
-                const result = await extractTransactionsFromPdf({ pdfDataUri });
-
-                const newTransactions: Transaction[] = result.transactions.map(txn => ({
-                    ...txn,
-                    id: `txn_${Date.now()}_${Math.random()}`,
-                    category: 'Other',
-                    balanceAfter: 0,
-                }));
-
-                setLocalData(prev => ({
-                    ...prev,
-                    transactions: [...newTransactions, ...prev.transactions]
-                }));
-
-                toast({ title: "Extraction Complete", description: `${newTransactions.length} transactions were imported. Please review and save.` });
-
-            } catch (error) {
-                console.error("PDF Extraction failed", error);
-                toast({ variant: 'destructive', title: "Extraction Failed", description: "Could not extract transactions from the PDF." });
-            } finally {
-                setIsExtracting(false);
-            }
-        };
-        reader.readAsDataURL(file);
+    const applyParsedStatement = (mode: 'replace-app' | 'replace-transactions' | 'save-transactions') => {
+        if (!parsedStatement) return;
+        const nextData = applyStatementToAppData(appData, parsedStatement, mode);
+        setLocalData(nextData);
+        setAppData(nextData);
+        const message = mode === 'replace-app' ? 'Profile, main account details, balance, and transactions replaced. App visuals and other collections were preserved.'
+            : mode === 'replace-transactions' ? 'Existing transactions replaced; profile and account details were left unchanged.'
+            : 'New statement transactions saved alongside existing transactions; duplicates were skipped.';
+        toast({ title: 'Statement saved', description: `${message} Imported ${parsedStatement.transactions.length} statement rows.` });
+        setParsedStatement(null);
     };
 
     const copyJsonToClipboard = () => {
@@ -652,11 +651,31 @@ export default function SettingsPage() {
               </div>
           </SettingsSection>
           
-          <SettingsSection title="AI Statement Upload" description="Upload a PDF bank statement to extract transactions automatically.">
-            <div className="space-y-2">
+          <SettingsSection title="Statement PDF Import" description="Extract statement transactions and account details locally in your browser. Review the result, then choose how to apply it.">
+            <div className="space-y-3">
               <Label>PDF Statement</Label>
-              <Input type="file" accept=".pdf" onChange={handlePdfUpload} disabled={isExtracting} />
-              {isExtracting && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Extracting...</div>}
+              <Input type="file" accept="application/pdf,.pdf" onChange={handlePdfUpload} disabled={isExtracting} />
+              {isExtracting && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Reading statement pages and extracting rows...</div>}
+              {parsedStatement && <div className="space-y-3 rounded-lg border p-4">
+                <h3 className="font-semibold">Statement preview</h3>
+                <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  <p><span className="text-muted-foreground">Name:</span> {parsedStatement.details.name || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">Customer ID:</span> {parsedStatement.details.customerId || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">Account number:</span> {parsedStatement.details.accountNumber || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">IFSC:</span> {parsedStatement.details.ifsc || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">Branch:</span> {parsedStatement.details.branchName || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">Closing balance:</span> {parsedStatement.details.closingBalance?.toLocaleString('en-IN', { style: 'currency', currency: 'INR' }) || 'Not found'}</p>
+                  <p className="sm:col-span-2"><span className="text-muted-foreground">Address:</span> {parsedStatement.details.address || 'Not found'}</p>
+                  <p><span className="text-muted-foreground">Transactions found:</span> {parsedStatement.transactions.length}</p>
+                  <p><span className="text-muted-foreground">Date range:</span> {parsedStatement.transactions.length ? `${new Date(Math.min(...parsedStatement.transactions.map(t => Date.parse(t.date)))).toLocaleDateString('en-IN')} ? ${new Date(Math.max(...parsedStatement.transactions.map(t => Date.parse(t.date)))).toLocaleDateString('en-IN')}` : 'N/A'}</p>
+                </div>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button onClick={() => applyParsedStatement('replace-app')}>Replace App Data</Button>
+                  <Button variant="outline" onClick={() => applyParsedStatement('replace-transactions')}>Replace Transactions Only</Button>
+                  <Button variant="outline" onClick={() => applyParsedStatement('save-transactions')}>Save Transactions (Keep Existing)</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Replace App Data updates the profile, primary account details, balance and transactions while preserving your app logo, banners, payees and chat history. The other two actions change transactions only.</p>
+              </div>}
             </div>
           </SettingsSection>
         </div>

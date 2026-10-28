@@ -14,7 +14,15 @@ export function getAppData(): AppData {
       // A simple migration strategy: merge initialData with storedData
       // to ensure new fields from updates are not missing.
       const parsedData = JSON.parse(storedData);
-      return { ...initialData, ...parsedData, user: {...initialData.user, ...parsedData.user} };
+      // Apply the supplied FINO visual backup once to existing browser data without replacing user/account/transaction records.
+      const visualsVersionKey = 'finoPayVisualsSeedV1';
+      let appSettings = { ...initialData.appSettings, ...(parsedData.appSettings || {}) };
+      if (!window.localStorage.getItem(visualsVersionKey)) {
+        appSettings = { ...(parsedData.appSettings || {}), ...initialData.appSettings };
+        window.localStorage.setItem(visualsVersionKey, '1');
+      }
+      const migrated = { ...initialData, ...parsedData, user: { ...initialData.user, ...parsedData.user }, appSettings };
+      return migrated;
     } else {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
       return initialData;

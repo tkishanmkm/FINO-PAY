@@ -122,11 +122,11 @@ export default function LiveChatPage() {
     // Add agent response after a delay
     setTimeout(() => {
         const intermediateMessages = [...updatedChatMessages, agentResponse];
-        setAppData(prev => ({ ...prev, chatMessages: intermediateMessages }));
+        setAppData({ ...appData, chatMessages: intermediateMessages });
 
         // Close chat after agent response
         setTimeout(() => {
-            setAppData(prev => ({ ...prev, chatMessages: [...intermediateMessages, closingMessage] }));
+            setAppData({ ...appData, chatMessages: [...intermediateMessages, closingMessage] });
             setIsChatClosed(true);
         }, 2000);
 

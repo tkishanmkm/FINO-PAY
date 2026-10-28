@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { parseISO, toDate } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 const getInitials = (name: string = '') => {
@@ -174,7 +174,7 @@ export default function PaymentClientPage({ payeeId }: { payeeId: string }) {
 
     // Generate reference numbers
     const paymentRefNumber = `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-    const nowInIST = toDate(new Date(), { timeZone: 'Asia/Kolkata' });
+    const nowInIST = new Date();
     
     let paymentDescription = '';
     let transactionsToAdd: Transaction[] = [];
