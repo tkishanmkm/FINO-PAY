@@ -375,9 +375,23 @@ export default function PassbookPage() {
         writeParagraph('Free RuPay Debit Card Insurance', { bold: true, gapAfter: 20, fontSize: 8 });
         writeParagraph('On opting for RuPay Platinum Debit Card in your account, insurance cover of up to Rs. 2 lakh in case of accidental death/permanent disability due to accident may be available. Claim intimation should be done within 90 days from the date of accident and the required eligible card transaction conditions apply. Insurance partner � The New India Assurance Co. Ltd. Email: rupay@newindia.co.in.', { gapAfter: 26 });
         writeParagraph('Write to customer care at customercare@finobank.com or contact 1800 268 1000. In case the complaint is not responded to or the customer is not satisfied, contact nodalofficer@finobank.com. If still not satisfied, escalate to the Principal Nodal Officer at pno@finobank.com.', { gapAfter: 10 });
-        writeParagraph('PNO Address: Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.', { gapAfter: 200 });
-        writeParagraph('Registered Corporate Address: Fino Payments Bank, Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.', { gapAfter: 8, fontSize: 7 });
-        writeParagraph('Dear Customer: from 1st April 2025, our Customer Care Number is 1800 268 1000.', { fontSize: 7 });
+        writeParagraph('PNO Address: Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.', { gapAfter: 10 });
+        // Fixed footer placement and width-constrained wrapping prevent text from running off the page.
+        const footerFontSize = 7;
+        const footerY = pageHeight - 48;
+        const footerAddress = 'Registered Corporate Address: Fino Payments Bank, Mindspace Juinagar, plot no Gen 2/1/F, Tower 1,8th Floor, TTC Industrial Area,MIDC, Shirwane,Juinagar, Navi Mumbai -400706.';
+        doc.setFont(FONT, 'normal');
+        doc.setFontSize(footerFontSize);
+        doc.setTextColor(0, 0, 0);
+        const footerLines = doc.splitTextToSize(footerAddress, pageWidth - 70);
+        doc.setFont(FONT, 'bold');
+        doc.text('Registered Corporate Address:', 35, footerY);
+        doc.setFont(FONT, 'normal');
+        doc.text(footerLines, 35, footerY + 11);
+        doc.setFontSize(footerFontSize);
+        doc.setFont(FONT, 'normal');
+        doc.setFontSize(7);
+        doc.text('Dear Customer from 1st April 2025, our Customer Care Number is 1800 268 1000', 35, pageHeight - 16);
         const accountDigits = String(mainAccount.accountNumber || '').replace(/\D/g, '');
         const lastAccountDigit = accountDigits.slice(-1) || '0';
         const filename = `Statement_XXXXXXXXXX${lastAccountDigit}.pdf`;

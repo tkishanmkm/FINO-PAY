@@ -47,15 +47,6 @@ export default function GetStatementPage() {
             <div className="relative w-48 h-48 mx-auto mt-12 mb-16">
                  <Image src={appData.appSettings.getStatementBanner || "https://storage.googleapis.com/project-ix-prod-upload/634a5d89-2131-47de-824a-a7a2b16b3b8d.png"} data-ai-hint="statement illustration" alt="Statement Illustration" layout="fill" objectFit="contain" />
             </div>
-
-            <Alert className="w-full max-w-sm mx-auto mb-4 text-left">
-              <AlertTitle>Statement password ? Option 1</AlertTitle>
-              <AlertDescription className="space-y-2 text-sm">
-                <p>Your password consists of the first four letters of your name followed by your date of birth in DDMMYYYY format.</p>
-                <p>Example: Ramesh Sharma, born 05 July 1986 ? <span className="font-semibold">rame05071986</span>.</p>
-                <p className="text-xs">This is the password format guidance. The locally generated demo PDF is not encrypted with a password.</p>
-              </AlertDescription>
-            </Alert>
             <Card className="w-full max-w-sm mx-auto text-left">
                 <CardContent className="p-4">
                 <label className="text-lg font-semibold text-foreground mb-2 block">
