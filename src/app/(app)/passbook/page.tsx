@@ -291,7 +291,7 @@ export default function PassbookPage() {
             head: [['Txn Date', 'Reference No.', 'Description', 'Debits', 'Credits', 'Balance(in Rs.)']],
             body: firstPageBody,
             headStyles: { fillColor: [58, 58, 177], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', fontSize: 10, lineColor: [0, 0, 0], lineWidth: 1.0 },
-            bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0] },
+            bodyStyles: { fontStyle: 'normal', textColor: [0, 0, 0], font: FONT },
             styles: { fontSize: 8, font: FONT, cellPadding: 5, lineColor: [0, 0, 0], lineWidth: 1.0, valign: 'middle' },
             columnStyles: {
                 0: { halign: 'center', cellWidth: 60 },
@@ -310,7 +310,7 @@ export default function PassbookPage() {
                 body: remainingBody,
                 margin: { top: 90 }, // Global top margin for all pages
                 headStyles: { fillColor: [58, 58, 177], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', fontSize: 10, lineColor: [0, 0, 0], lineWidth: 1.0 },
-                bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0] },
+                bodyStyles: { fontStyle: 'normal', textColor: [0, 0, 0], font: FONT },
                 styles: { fontSize: 8, font: FONT, cellPadding: 5, lineColor: [0, 0, 0], lineWidth: 1.0, valign: 'middle' },
                 columnStyles: {
                     0: { halign: 'center', cellWidth: 60 },
