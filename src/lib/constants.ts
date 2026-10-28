@@ -20,7 +20,7 @@ export const initialData: AppData = {
       email: 'test.kishanmishra@gmail.com',
       address: 'A-123, Star Apartments, Galaxy Road, Mumbai, Maharashtra, 400001',
     },
-    upiId: 'fino.7367857629@finobank',
+    upiId: '',
     dob: '05/09/2006',
     pan: 'ABCDE1239P',
   },

@@ -226,7 +226,7 @@ export default function SettingsPage() {
     };
     
     const handleExport = () => {
-        const jsonString = JSON.stringify(appData, null, 2);
+        const jsonString = JSON.stringify(localData, null, 2);
         const blob = new Blob([jsonString], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -237,7 +237,7 @@ export default function SettingsPage() {
     };
 
     const handleExportByLink = () => {
-        const jsonString = JSON.stringify(appData);
+        const jsonString = JSON.stringify(localData);
         // Solution for btoa with Unicode characters: https://stackoverflow.com/a/30106551
         const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
         const dataUri = `data:application/json;base64,${base64Data}`;
@@ -320,7 +320,7 @@ export default function SettingsPage() {
     };
 
     const copyJsonToClipboard = () => {
-        const jsonString = JSON.stringify(appData, null, 2);
+        const jsonString = JSON.stringify(localData, null, 2);
         navigator.clipboard.writeText(jsonString);
         toast({ title: 'JSON Copied', description: 'The app data has been copied to your clipboard.' });
     };
@@ -373,6 +373,17 @@ export default function SettingsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection title="Security & MPIN" description="Set and save the four-digit login MPIN on this device. It is included in the JSON backup.">
+            <div className="space-y-2">
+              <Label htmlFor="user-mpin">Login MPIN (4 digits)</Label>
+              <Input id="user-mpin" type="password" inputMode="numeric" autoComplete="new-password" maxLength={4}
+                value={localData.user.pin || ''}
+                onChange={e => { const value = e.target.value; if (/^\d{0,4}$/.test(value)) handleFieldChange('user', 'pin', value); }}
+                placeholder="Enter a 4-digit MPIN" />
+              <p className="text-xs text-muted-foreground">Choose Save All Changes to apply it. The demo login will check this MPIN. Keep exported backups private because they contain the MPIN and personal data.</p>
             </div>
           </SettingsSection>
 
@@ -699,7 +710,7 @@ export default function SettingsPage() {
             <div className="mt-4">
               <ScrollArea className="h-[50vh] w-full rounded-md border p-4">
                 <pre>
-                  <code>{JSON.stringify(appData, null, 2)}</code>
+                  <code>{JSON.stringify(localData, null, 2)}</code>
                 </pre>
               </ScrollArea>
             </div>

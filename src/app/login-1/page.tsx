@@ -57,19 +57,22 @@ export default function LoginPage1() {
   };
 
   const handleLogin = (finalPin: string) => {
-    if (finalPin.length === 4) {
-      setIsLoggingIn(true);
-      setTimeout(() => {
-        login();
-        router.push('/dashboard');
-      }, 1500); // Simulate network latency
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'PIN must be 4 digits.',
-      });
+    const savedPin = String(appData.user.pin || '');
+    if (!/^\d{4}$/.test(finalPin)) {
+      setPin('');
+      toast({ variant: 'destructive', title: 'Invalid MPIN', description: 'Enter your four-digit MPIN.' });
+      return;
     }
+    if (!/^\d{4}$/.test(savedPin) || finalPin !== savedPin) {
+      setPin('');
+      toast({ variant: 'destructive', title: 'Login Failed', description: 'Incorrect MPIN. Check your saved MPIN in Settings.' });
+      return;
+    }
+    setIsLoggingIn(true);
+    setTimeout(() => {
+      login();
+      router.push('/dashboard');
+    }, 500);
   };
 
   return (
