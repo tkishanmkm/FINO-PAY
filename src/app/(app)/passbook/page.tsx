@@ -166,26 +166,31 @@ export default function PassbookPage() {
         const pageWidth = doc.internal.pageSize.width;
         let finalY = 0;
         
+        // Load the configured statement header reliably, including cached data URLs.
         const headerBannerImg = appSettings.statementHeaderBanner ? new Image() : null;
-        if(headerBannerImg && appSettings.statementHeaderBanner) {
-            headerBannerImg.src = appSettings.statementHeaderBanner;
-            await new Promise(resolve => {
-                headerBannerImg.onload = () => resolve(true);
-                headerBannerImg.onerror = () => resolve(false);
+        if (headerBannerImg && appSettings.statementHeaderBanner) {
+            await new Promise<void>(resolve => {
+                headerBannerImg.onload = () => resolve();
+                headerBannerImg.onerror = () => resolve();
+                headerBannerImg.src = appSettings.statementHeaderBanner!;
+                if (headerBannerImg.complete) resolve();
             });
         }
-        
+
         const addHeader = (docInstance: jsPDF) => {
-             if(headerBannerImg?.complete && headerBannerImg.src.startsWith('data')) {
-                docInstance.addImage(headerBannerImg, 'PNG', 40, 30, 150, 38, undefined, 'FAST');
-             } else {
+            if (headerBannerImg?.complete && headerBannerImg.naturalWidth > 0) {
+                const ratio = headerBannerImg.naturalHeight / headerBannerImg.naturalWidth;
+                const width = Math.min(205, pageWidth - 80);
+                const height = Math.min(55, width * ratio);
+                const format = headerBannerImg.src.startsWith('data:image/jpeg') ? 'JPEG' : headerBannerImg.src.startsWith('data:image/webp') ? 'WEBP' : 'PNG';
+                docInstance.addImage(headerBannerImg, format, 40, 17, width, height, undefined, 'FAST');
+            } else {
                 docInstance.setFont(FONT, 'bold');
                 docInstance.setFontSize(20);
                 docInstance.setTextColor(0, 0, 0);
-                docInstance.text("Fino Payments Bank", 40, 40);
-             }
+                docInstance.text('Fino Payments Bank', 40, 40);
+            }
         }
-        
         // Add header to first page
         addHeader(doc);
         
@@ -323,19 +328,10 @@ export default function PassbookPage() {
         }
 
 
-        // Dedicated final page: calculated statement summary and supplied customer-information footer.
-        // This app creates a demonstration statement, not a bank-issued document.
+        // Final page follows the supplied finostats.pdf layout: six-column balance summary,
+        // note, service-charge/PAN information, customer-care details, RuPay insurance, and addresses.
         doc.addPage();
         addHeader(doc);
-        doc.setFont(FONT, 'bold');
-        doc.setFontSize(15);
-        doc.setTextColor(58, 58, 177);
-        doc.text('Statement Summary', pageWidth / 2, 82, { align: 'center' });
-        doc.setFont(FONT, 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor(180, 0, 0);
-        doc.text('DEMO STATEMENT ? NOT ISSUED BY FINO PAYMENTS BANK', pageWidth / 2, 101, { align: 'center' });
-
         const credits = sortedTransactions.filter(txn => txn.type === 'credit');
         const debits = sortedTransactions.filter(txn => txn.type === 'debit');
         const debitTotal = debits.reduce((sum, txn) => sum + Math.abs(Number(txn.amount) || 0), 0);
@@ -346,58 +342,42 @@ export default function PassbookPage() {
           ? Math.max(0, Number(firstTxn.balanceAfter || 0) + (firstTxn.type === 'debit' ? Math.abs(Number(firstTxn.amount) || 0) : -Math.abs(Number(firstTxn.amount) || 0)))
           : Number(mainAccount.balance || 0);
         const closingBalance = lastTxn ? Number(lastTxn.balanceAfter || 0) : Number(mainAccount.balance || 0);
-        const summaryRows = [
-          ['Opening Balance (Rs.)', formatCurrency(openingBalance)],
-          ['Dr. Count', String(debits.length)],
-          ['Cr. Count', String(credits.length)],
-          ['Debit Amount (Rs.)', formatCurrency(debitTotal)],
-          ['Credit Amount (Rs.)', formatCurrency(creditTotal)],
-          ['Closing Balance (Rs.)', formatCurrency(closingBalance)],
-        ];
         autoTable(doc, {
-          startY: 116,
-          head: [['Particulars', 'Amount / Count']],
-          body: summaryRows,
+          startY: 126,
+          margin: { left: 34, right: 34 },
+          head: [['Opening Balance(Rs.)', 'Dr. Count', 'Cr. Count', 'Debit Amount(Rs.)', 'Credit Amount(Rs.)', 'Closing Balance(Rs.)']],
+          body: [[formatCurrency(openingBalance), String(debits.length), String(credits.length), formatCurrency(debitTotal), formatCurrency(creditTotal), formatCurrency(closingBalance)]],
           theme: 'grid',
-          styles: { font: FONT, fontSize: 9, cellPadding: 5, textColor: [0, 0, 0], lineColor: [120, 120, 120], lineWidth: 0.5 },
-          headStyles: { fillColor: [58, 58, 177], textColor: [255, 255, 255], fontStyle: 'bold' },
-          columnStyles: { 0: { cellWidth: 330 }, 1: { halign: 'right' } },
+          styles: { font: FONT, fontSize: 7.1, cellPadding: 5, halign: 'center', textColor: [0, 0, 0], lineColor: [80, 80, 80], lineWidth: 0.4 },
+          headStyles: { fillColor: [58, 58, 177], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+          columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 88 }, 2: { cellWidth: 88 }, 3: { cellWidth: 90 }, 4: { cellWidth: 90 }, 5: { cellWidth: 90 } },
         });
-        let summaryY = (doc as any).lastAutoTable.finalY + 12;
-        const footerParagraphs = [
-          'Note: Closing Balance figure includes unclear funds, hold amounts if any.',
-          'W.e.f. 1st July 2017, GST at the rate of 18% is applicable on all service charges levied by the bank.',
-          'In case your PAN is not updated in our record, please visit the nearest branch and provide a copy of the PAN card along with the original PAN card for verification.',
-          'For any queries, call 1800 268 1000, write to customercare@finobank.com, or visit www.finobank.com.',
-          'Unless the constituent notifies the Bank of any discrepancy in this statement within 15 days from the date of statement, it will be construed that the transactions in the statement are correct. This demonstration document is generated by the FINO PAY app and is not an official bank statement.',
-          'Free RuPay Debit Card Insurance: On opting for a RuPay Platinum Debit Card, insurance cover of up to Rs. 2 lakh in case of accidental death/permanent disability due to accident may be available, subject to the bank and insurer terms. Claim intimation should be done within 90 days from the date of accident and the required eligible card transaction conditions apply. Insurance partner: The New India Assurance Co. Ltd. Email: rupay@newindia.co.in.',
-          'Write to customercare@finobank.com or contact 1800 268 1000. If the complaint is not responded to or the customer is not satisfied, contact nodalofficer@finobank.com with the complaint ticket number. Further escalation: pno@finobank.com.',
-          'PNO Address: Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706. Registered Corporate Address: Fino Payments Bank, Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.',
-          'Dear Customer: from 1st April 2025, the Customer Care Number is 1800 268 1000.',
-        ];
-        doc.setFont(FONT, 'normal');
-        doc.setFontSize(7.3);
-        doc.setTextColor(45, 45, 45);
-        const footerWidth = pageWidth - 80;
-        for (const paragraph of footerParagraphs) {
-          const lines = doc.splitTextToSize(paragraph, footerWidth);
-          const needed = lines.length * 8.4 + 3;
-          if (summaryY + needed > pageHeight - 38) {
+
+        let summaryY = (doc as any).lastAutoTable.finalY + 26;
+        const writeParagraph = (text: string, options: { bold?: boolean; gapAfter?: number; fontSize?: number } = {}) => {
+          doc.setFont(FONT, options.bold ? 'bold' : 'normal');
+          doc.setFontSize(options.fontSize || 7.2);
+          doc.setTextColor(0, 0, 0);
+          const lines = doc.splitTextToSize(text, pageWidth - 70);
+          const lineHeight = (options.fontSize || 7.2) * 1.55;
+          if (summaryY + lines.length * lineHeight > pageHeight - 30) {
             doc.addPage();
             addHeader(doc);
-            summaryY = 65;
-            doc.setFont(FONT, 'bold');
-            doc.setFontSize(9);
-            doc.setTextColor(180, 0, 0);
-            doc.text('DEMO STATEMENT ? NOT ISSUED BY FINO PAYMENTS BANK', pageWidth / 2, 48, { align: 'center' });
-            doc.setFont(FONT, 'normal');
-            doc.setFontSize(7.3);
-            doc.setTextColor(45, 45, 45);
+            summaryY = 85;
           }
-          doc.text(lines, 40, summaryY);
-          summaryY += needed;
-        }
-
+          doc.text(lines, 35, summaryY);
+          summaryY += lines.length * lineHeight + (options.gapAfter ?? 10);
+        };
+        writeParagraph('Note: Closing Balance figure includes unclear funds, hold amounts if any.', { bold: true, gapAfter: 20, fontSize: 7.5 });
+        writeParagraph('� W.e.f. 1st July 2017, GST at the rate of 18% is applicable on all service charges levied by the bank.\n� In case your PAN is not updated in our record, please visit the nearest branch and provide a copy of the PAN card along with the original PAN card for verification.', { gapAfter: 18 });
+        writeParagraph('For any queries, call us at 1800 268 1000, or write to us at customercare@finobank.com, or visit us at www.finobank.com.', { gapAfter: 10 });
+        writeParagraph('Unless the constituent notifies the Bank of any discrepancy in this statement within 15 days from the date of statement, it will be construed that the transactions in the statement are correct. This is a system-generated demonstration statement from the FINO PAY app and is not an official bank-issued statement.', { gapAfter: 22 });
+        writeParagraph('Free RuPay Debit Card Insurance', { bold: true, gapAfter: 20, fontSize: 8 });
+        writeParagraph('On opting for RuPay Platinum Debit Card in your account, insurance cover of up to Rs. 2 lakh in case of accidental death/permanent disability due to accident may be available. Claim intimation should be done within 90 days from the date of accident and the required eligible card transaction conditions apply. Insurance partner � The New India Assurance Co. Ltd. Email: rupay@newindia.co.in.', { gapAfter: 26 });
+        writeParagraph('Write to customer care at customercare@finobank.com or contact 1800 268 1000. In case the complaint is not responded to or the customer is not satisfied, contact nodalofficer@finobank.com. If still not satisfied, escalate to the Principal Nodal Officer at pno@finobank.com.', { gapAfter: 10 });
+        writeParagraph('PNO Address: Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.', { gapAfter: 200 });
+        writeParagraph('Registered Corporate Address: Fino Payments Bank, Mindspace Juinagar, Plot No Gen 2/1/F, Tower 1, 8th Floor, TTC Industrial Area, MIDC Shirwane, Juinagar, Navi Mumbai - 400706.', { gapAfter: 8, fontSize: 7 });
+        writeParagraph('Dear Customer: from 1st April 2025, our Customer Care Number is 1800 268 1000.', { fontSize: 7 });
         const accountDigits = String(mainAccount.accountNumber || '').replace(/\D/g, '');
         const lastAccountDigit = accountDigits.slice(-1) || '0';
         const filename = `Statement_XXXXXXXXXX${lastAccountDigit}.pdf`;
