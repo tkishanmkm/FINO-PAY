@@ -477,18 +477,12 @@ export default function SettingsPage() {
                       <h4 className="font-semibold">{acc.type} Account</h4>
                       <div className="space-y-2">
                           <Label>A/c Variant</Label>
-                          <Select value={acc.variant || 'Standard'} onValueChange={(v: NonNullable<Account['variant']>) => handleAccountChange(index, 'variant', v)}>
-                              <SelectTrigger><SelectValue placeholder="Choose account variant" /></SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="Standard">Standard</SelectItem>
-                                  <SelectItem value="Basic">Basic</SelectItem>
-                                  <SelectItem value="Salary">Salary</SelectItem>
-                                  <SelectItem value="Premium">Premium</SelectItem>
-                                  <SelectItem value="Business">Business</SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">Choose the variant for this account. Changes apply when you save settings.</p>
+                          <Input
+                              value={acc.variant ?? ''}
+                              placeholder="Enter account variant"
+                              onChange={e => handleAccountChange(index, 'variant', e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">Type any account variant. Changes apply when you save settings.</p>
                       </div>
                       <div className="space-y-2">
                           <Label>A/c Type</Label>
