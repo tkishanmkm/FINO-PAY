@@ -486,15 +486,11 @@ export default function SettingsPage() {
                       </div>
                       <div className="space-y-2">
                           <Label>A/c Type</Label>
-                          <Select value={acc.type} onValueChange={(v: Account['type']) => handleAccountChange(index, 'type', v)}>
-                              <SelectTrigger><SelectValue placeholder="Choose account type" /></SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="Savings">Savings</SelectItem>
-                                  <SelectItem value="Sampann current">Sampann current</SelectItem>
-                                  <SelectItem value="Investment">Investment</SelectItem>
-                                  <SelectItem value="Loan">Loan</SelectItem>
-                              </SelectContent>
-                          </Select>
+                          <Input
+                              value={acc.type ?? ''}
+                              placeholder="Enter account type"
+                              onChange={e => handleAccountChange(index, 'type', e.target.value as Account['type'])}
+                          />
                       </div>
                       <div className="space-y-2">
                           <Label>Account Number</Label>
