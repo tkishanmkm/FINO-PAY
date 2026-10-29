@@ -20,6 +20,7 @@ export interface User {
 export interface Account {
   id: string;
   type: 'Savings' | 'Investment' | 'Loan' | 'Sampann current';
+  variant?: 'Standard' | 'Basic' | 'Salary' | 'Premium' | 'Business' | 'Other';
   accountNumber: string;
   balance: number;
   currency: 'INR';

@@ -81,7 +81,8 @@ export default function MyAccountPage() {
             
             {showMoreDetails && (
               <div className="space-y-4 pt-4 border-t">
-                <DetailRow label="Account type" value={`FinoPay ${mainAccount.type} Account`} />
+                <DetailRow label="A/c Type" value={mainAccount.type} />
+                <DetailRow label="A/c Variant" value={mainAccount.variant || 'Standard'} />
                 <DetailRow label="IFSC code" value={mainAccount.ifsc || 'N/A'} />
                 <DetailRow label="Customer ID" value={user.customerId} />
                 <DetailRow label="Branch name" value={mainAccount.branchName || 'N/A'} />

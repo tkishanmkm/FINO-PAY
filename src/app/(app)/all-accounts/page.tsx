@@ -40,7 +40,7 @@ export default function AllAccountsPage() {
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{account.accountNumber}</p>
-                  <p className="text-sm text-muted-foreground">{account.type} Account</p>
+                  <p className="text-sm text-muted-foreground">{account.type} Account · {account.variant || 'Standard'} Variant</p>
                 </div>
                 <Link href="/current-account-details">
                   <Button variant="ghost" size="icon">

@@ -476,9 +476,24 @@ export default function SettingsPage() {
                   <div key={acc.id} className="p-4 border rounded-md space-y-3">
                       <h4 className="font-semibold">{acc.type} Account</h4>
                       <div className="space-y-2">
-                          <Label>Account Type</Label>
+                          <Label>A/c Variant</Label>
+                          <Select value={acc.variant || 'Standard'} onValueChange={(v: NonNullable<Account['variant']>) => handleAccountChange(index, 'variant', v)}>
+                              <SelectTrigger><SelectValue placeholder="Choose account variant" /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="Standard">Standard</SelectItem>
+                                  <SelectItem value="Basic">Basic</SelectItem>
+                                  <SelectItem value="Salary">Salary</SelectItem>
+                                  <SelectItem value="Premium">Premium</SelectItem>
+                                  <SelectItem value="Business">Business</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Choose the variant for this account. Changes apply when you save settings.</p>
+                      </div>
+                      <div className="space-y-2">
+                          <Label>A/c Type</Label>
                           <Select value={acc.type} onValueChange={(v: Account['type']) => handleAccountChange(index, 'type', v)}>
-                              <SelectTrigger><SelectValue/></SelectTrigger>
+                              <SelectTrigger><SelectValue placeholder="Choose account type" /></SelectTrigger>
                               <SelectContent>
                                   <SelectItem value="Savings">Savings</SelectItem>
                                   <SelectItem value="Sampann current">Sampann current</SelectItem>
