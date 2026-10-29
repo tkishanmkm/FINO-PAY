@@ -13,9 +13,13 @@ const variantClasses: Record<NonNullable<User['avatarVariant']>, string> = {
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return 'U';
+  if (!parts.length) return '??';
   const first = Array.from(parts[0])[0] || '';
-  const last = parts.length > 1 ? Array.from(parts[parts.length - 1])[0] || '' : '';
+  // Match the initials shown on /personal-details: use the first and last
+  // name initials, or the first two letters when only one name is present.
+  const last = parts.length > 1
+    ? Array.from(parts[parts.length - 1])[0] || ''
+    : Array.from(parts[0])[1] || '';
   return (first + last).toLocaleUpperCase();
 }
 

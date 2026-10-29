@@ -104,15 +104,17 @@ export default function MyAccountPage() {
       {/* UPI and Tabs section */}
       <div className="bg-primary flex-grow">
         <div className="bg-secondary flex-grow rounded-t-2xl p-4 space-y-4">
-            <div className="bg-primary/10 p-3 rounded-lg flex items-center justify-between text-sm">
-                <p className="text-primary truncate">
-                    UPI ID: <span className="font-semibold">{user.upiId}</span>
-                </p>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(user.upiId, 'UPI ID')}>
-                    <Copy className="h-4 w-4 text-primary" />
-                    <span className="sr-only">Copy UPI ID</span>
-                </Button>
-            </div>
+            {user.upiId?.trim() && (
+              <div className="bg-primary/10 p-3 rounded-lg flex items-center justify-between text-sm">
+                  <p className="text-primary truncate">
+                      UPI ID: <span className="font-semibold">{user.upiId}</span>
+                  </p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(user.upiId, 'UPI ID')}>
+                      <Copy className="h-4 w-4 text-primary" />
+                      <span className="sr-only">Copy UPI ID</span>
+                  </Button>
+              </div>
+            )}
 
             <Tabs defaultValue="services" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-primary/10">

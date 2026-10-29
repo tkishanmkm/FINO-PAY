@@ -264,7 +264,7 @@ export default function SettingsPage() {
         for (const key of visualKeys) {
             const value = snapshot.appSettings[key];
             if (typeof value === 'string') {
-                (snapshot.appSettings as Record<string, unknown>)[key] = await embedImage(value);
+                (snapshot.appSettings as unknown as Record<string, unknown>)[key] = await embedImage(value);
             }
         }
         snapshot.appSettings.promoBanners = await Promise.all(
