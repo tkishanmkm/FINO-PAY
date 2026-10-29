@@ -32,7 +32,7 @@ export default function AppBody({
     (window as any).handleLogoutLegacy = handleLogoutLegacy;
 
     // Conditionally show splash screen based on path
-    if (pathname === '/login-1') {
+    if (pathname === '/' || pathname === '/login-1') {
       setAppState('splashing');
     } else {
       setAppState('ready');
