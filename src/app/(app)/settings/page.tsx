@@ -35,6 +35,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import UserAvatar from '@/components/UserAvatar';
 
 function SettingsSection({ title, description, children, defaultOpen = false }: { title: string, description?: string, children: React.ReactNode, defaultOpen?: boolean }) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -420,12 +421,40 @@ export default function SettingsPage() {
               <Label htmlFor="upiId">UPI ID</Label>
               <Input id="upiId" value={localData.user.upiId} onChange={e => handleFieldChange('user', 'upiId', e.target.value)} />
             </div>
-            <FileUpload 
-                  label="Profile Picture (Avatar)" 
-                  accept="image/*" 
-                  currentImage={localData.user.profilePicture} 
-                  onFileSelect={uri => handleFieldChange('user', 'profilePicture', uri)} 
+            <div className="space-y-3 rounded-lg border p-3">
+              <Label>Account Avatar Variant</Label>
+              <Select
+                value={localData.user.avatarVariant || 'purple'}
+                onValueChange={(value: NonNullable<AppData['user']['avatarVariant']>) => handleFieldChange('user', 'avatarVariant', value)}
+              >
+                <SelectTrigger><SelectValue placeholder="Choose avatar style" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="purple">Classic Purple (KM style)</SelectItem>
+                  <SelectItem value="blue">Ocean Blue</SelectItem>
+                  <SelectItem value="green">Emerald Green</SelectItem>
+                  <SelectItem value="orange">Sunset Orange</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-3">
+                <UserAvatar user={localData.user} className="h-14 w-14 text-lg" />
+                <div className="min-w-0">
+                  <p className="font-semibold">{localData.user.name || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">Initials update automatically when the name changes.</p>
+                </div>
+              </div>
+              <FileUpload
+                label="Upload Custom Avatar Image"
+                accept="image/*"
+                currentImage={localData.user.profilePicture}
+                onFileSelect={uri => handleFieldChange('user', 'profilePicture', uri)}
               />
+              {localData.user.profilePicture && (
+                <Button type="button" variant="outline" size="sm" onClick={() => handleFieldChange('user', 'profilePicture', '')}>
+                  Use Initials Avatar
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">The selected color and initials style are used anywhere the profile avatar appears. An uploaded image takes priority until you switch back to initials.</p>
+            </div>
           </SettingsSection>
 
           <SettingsSection title="App Visuals" description="Customize logo and banners.">

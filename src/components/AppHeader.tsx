@@ -3,7 +3,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import UserAvatar from '@/components/UserAvatar';
 import { useAppData } from '@/hooks/use-app-data';
 import Image from 'next/image';
 
@@ -11,14 +11,6 @@ export default function AppHeader() {
   const { appData } = useAppData();
   const router = useRouter();
   
-  const nameParts = appData.user.name.split(' ').filter(Boolean);
-  let userInitials = 'U';
-  if (nameParts.length > 0) {
-    const firstInitial = nameParts[0][0];
-    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
-    userInitials = `${firstInitial}${lastInitial}`;
-  }
-
   return (
     <header className="fixed top-0 left-0 right-0 z-20 h-24 bg-primary text-primary-foreground overflow-hidden">
       {/* Swoosh background element */}
@@ -46,12 +38,7 @@ export default function AppHeader() {
           
           {/* Profile */}
           <div className="cursor-pointer" onClick={() => router.push('/profile')}>
-              <Avatar className="h-10 w-10 border-2 border-white">
-                <AvatarImage src={appData.user.profilePicture} alt={appData.user.name} />
-                <AvatarFallback className="bg-primary-foreground text-primary font-bold">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar user={appData.user} className="h-10 w-10 border-2 border-white" />
           </div>
         </div>
       </div>

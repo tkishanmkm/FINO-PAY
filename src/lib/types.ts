@@ -4,6 +4,7 @@ export interface User {
   name: string;
   customerId: string;
   profilePicture: string; // URL or data URI
+  avatarVariant?: 'purple' | 'blue' | 'green' | 'orange';
   pin: string;
   kycStatus: 'Verified' | 'Pending' | 'Rejected';
   contact: {

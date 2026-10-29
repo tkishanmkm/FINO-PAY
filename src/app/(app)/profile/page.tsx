@@ -18,7 +18,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useAppData } from '@/hooks/use-app-data';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import UserAvatar from '@/components/UserAvatar';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -31,14 +31,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const user = appData.user;
   const mainAccount = appData.accounts.find(acc => acc.type === 'Savings' || acc.type === 'Sampann current');
-
-  const nameParts = user.name.split(' ').filter(Boolean);
-  let userInitials = 'U';
-  if (nameParts.length > 0) {
-    const firstInitial = nameParts[0][0];
-    const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : '';
-    userInitials = `${firstInitial}${lastInitial}`;
-  }
 
   const handleLogout = () => {
     logout();
@@ -70,12 +62,7 @@ export default function ProfilePage() {
 
        <main className="flex-1 overflow-y-auto bg-background text-center px-4 pb-2">
           <div className="relative inline-block">
-            <Avatar className="h-16 w-16 text-2xl border-2 border-primary">
-              <AvatarImage src={user.profilePicture} alt={user.name} />
-              <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar user={user} className="h-16 w-16 text-2xl border-2 border-primary" />
             <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1 border border-background">
               <Camera className="h-3 w-3 text-primary-foreground" />
             </div>

@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-lg">Money Transfer</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-4">
-                  {appData.user.upiId && (
+                  {appData.user.upiId?.trim() && (
                     <div className="bg-secondary p-3 rounded-lg flex items-center justify-between text-sm">
                         <p className="text-muted-foreground truncate">
                             UPI ID: <span className="font-semibold text-foreground">{appData.user.upiId}</span>
