@@ -226,8 +226,59 @@ export default function SettingsPage() {
         }
     };
     
-    const handleExport = () => {
-        const jsonString = JSON.stringify(localData, null, 2);
+    const createExportSnapshot = async (): Promise<AppData> => {
+        // Make the backup portable: embed app visuals as data URIs instead of leaving
+        // relative /fino-assets paths or remote image URLs that may not exist elsewhere.
+        const embedImage = async (value?: string): Promise<string> => {
+            if (!value || value.startsWith('data:') || value.startsWith('blob:')) return value || '';
+            try {
+                const response = await fetch(new URL(value, window.location.origin).toString());
+                if (!response.ok) return value;
+                const blob = await response.blob();
+                return await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Image conversion failed'));
+                    reader.onerror = () => reject(reader.error || new Error('Image conversion failed'));
+                    reader.readAsDataURL(blob);
+                });
+            } catch {
+                // Keep the original URL if the remote host blocks browser access.
+                return value;
+            }
+        };
+
+        const snapshot: AppData = {
+            ...localData,
+            user: { ...localData.user, profilePicture: await embedImage(localData.user.profilePicture) },
+            payees: await Promise.all(localData.payees.map(async payee => ({
+                ...payee,
+                avatar: await embedImage(payee.avatar),
+            }))),
+            appSettings: { ...localData.appSettings },
+        };
+        const visualKeys: (keyof AppData['appSettings'])[] = [
+            'loginBanner', 'getStatementBanner', 'dashboardBanner', 'appLogo', 'appLogo2',
+            'messageAvatar', 'qrCodeImage', 'personalLoanBanner', 'twoWheelerLoanBanner',
+            'statementHeaderBanner', 'statementMiddleBanner',
+        ];
+        for (const key of visualKeys) {
+            const value = snapshot.appSettings[key];
+            if (typeof value === 'string') {
+                (snapshot.appSettings as Record<string, unknown>)[key] = await embedImage(value);
+            }
+        }
+        snapshot.appSettings.promoBanners = await Promise.all(
+            (localData.appSettings.promoBanners || []).map(async banner => ({
+                ...banner,
+                image: await embedImage(banner.image),
+            }))
+        );
+        return snapshot;
+    };
+
+    const handleExport = async () => {
+        const exportData = await createExportSnapshot();
+        const jsonString = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonString], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -237,8 +288,9 @@ export default function SettingsPage() {
         URL.revokeObjectURL(url);
     };
 
-    const handleExportByLink = () => {
-        const jsonString = JSON.stringify(localData);
+    const handleExportByLink = async () => {
+        const exportData = await createExportSnapshot();
+        const jsonString = JSON.stringify(exportData);
         // Solution for btoa with Unicode characters: https://stackoverflow.com/a/30106551
         const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
         const dataUri = `data:application/json;base64,${base64Data}`;
@@ -320,10 +372,11 @@ export default function SettingsPage() {
         setParsedStatement(null);
     };
 
-    const copyJsonToClipboard = () => {
-        const jsonString = JSON.stringify(localData, null, 2);
-        navigator.clipboard.writeText(jsonString);
-        toast({ title: 'JSON Copied', description: 'The app data has been copied to your clipboard.' });
+    const copyJsonToClipboard = async () => {
+        const exportData = await createExportSnapshot();
+        const jsonString = JSON.stringify(exportData, null, 2);
+        await navigator.clipboard.writeText(jsonString);
+        toast({ title: 'JSON Copied', description: 'App data and embedded visual assets have been copied to your clipboard.' });
     };
 
     return (
