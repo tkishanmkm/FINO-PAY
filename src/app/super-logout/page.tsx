@@ -264,7 +264,7 @@ export default function SuperLogoutPage() {
             <button aria-label="Cancel message" onClick={() => setStep(5)} className="absolute right-[2%] top-[5.1%] z-20 h-[5.5%] w-[19%] bg-transparent" />
             <div className="absolute left-0 top-[13.1%] z-10 flex h-[4.3%] w-full items-center gap-3 border-b border-[#e5e5e5] bg-white px-[4.2%] text-[clamp(14px,3.8vw,16px)]">
               <span className="shrink-0 text-[#8e8e93]">To:</span>
-              <span className="min-w-0 font-medium text-[#28bf58]">{mobileText}</span>
+              <span className="min-w-0 font-medium text-[#28bf58]">+91 70220 75566</span>
             </div>
             <div className="absolute left-0 top-[19.3%] z-10 flex max-h-[48%] w-full flex-col items-stretch gap-3 overflow-y-auto bg-white px-[4%] pb-2">
               {recentMessages.map(message => (
