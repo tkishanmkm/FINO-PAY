@@ -250,17 +250,18 @@ export default function SuperLogoutPage() {
               className="absolute inset-0 h-full w-full select-none object-fill"
             />
             <button aria-label="Cancel message" onClick={() => setStep(5)} className="absolute right-[2%] top-[5.1%] z-20 h-[5.5%] w-[19%] bg-transparent" />
-            <div className="absolute left-[10.5%] top-[13.1%] z-10 flex h-[4.3%] w-[70%] items-center bg-white text-[clamp(12px,3.4vw,16px)]">
-              <span className="font-medium text-[#28bf58]">{mobileText}</span>
+            <div className="absolute left-0 top-[13.1%] z-10 flex h-[4.3%] w-full items-center gap-3 border-b border-[#e5e5e5] bg-white px-[4.2%] text-[clamp(14px,3.8vw,16px)]">
+              <span className="shrink-0 text-[#8e8e93]">To:</span>
+              <span className="min-w-0 font-medium text-[#28bf58]">{mobileText}</span>
             </div>
-            <div className="absolute left-[20%] top-[19.3%] z-10 flex max-h-[48%] w-[76%] flex-col items-end gap-3 overflow-y-auto bg-white px-1 pb-2">
+            <div className="absolute left-0 top-[19.3%] z-10 flex max-h-[48%] w-full flex-col items-stretch gap-3 overflow-y-auto bg-white px-[4%] pb-2">
               {recentMessages.map(message => (
-                <div key={message.id} className="flex w-full flex-col items-end gap-1">
-                  <div className="flex flex-col items-center bg-white text-center text-[clamp(10px,2.9vw,13px)] leading-tight text-[#8e8e93]">
+                <div key={message.id} className="flex w-full flex-col items-stretch gap-1">
+                  <div className="flex w-full flex-col items-center bg-white text-center text-[clamp(10px,2.9vw,13px)] leading-tight text-[#8e8e93]">
                     <span>Text Message • SMS</span>
                     <span>{formatTokenMessageDate(message.timestamp)}</span>
                   </div>
-                  <div className="w-fit max-w-full rounded-[26px] bg-[#2fc45d] px-4 py-3 text-left text-[clamp(12px,3.5vw,16px)] leading-[1.35] text-white shadow-sm">
+                  <div className="ml-auto w-fit max-w-[96%] rounded-[26px] bg-[#2fc45d] px-4 py-3 text-left text-[clamp(12px,3.5vw,16px)] leading-[1.35] text-white shadow-sm">
                     <p className="break-all whitespace-pre-wrap">{message.message}</p>
                   </div>
                 </div>
