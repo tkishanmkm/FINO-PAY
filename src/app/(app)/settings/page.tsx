@@ -224,6 +224,28 @@ export default function SettingsPage() {
         setLocalData(prev => ({...prev, chatMessages: prev.chatMessages.filter(m => m.id !== id)}));
     }
 
+    const updateTokenMessageHistory = (messages: NonNullable<AppData['appSettings']['superLogoutTokenMessages']>) => {
+        setLocalData(prev => ({
+            ...prev,
+            appSettings: { ...prev.appSettings, superLogoutTokenMessages: messages },
+        }));
+        setAppData({
+            ...appData,
+            appSettings: { ...appData.appSettings, superLogoutTokenMessages: messages },
+        });
+    };
+
+    const removeTokenMessage = (id: string) => {
+        const messages = (localData.appSettings.superLogoutTokenMessages || []).filter(message => message.id !== id);
+        updateTokenMessageHistory(messages);
+        toast({ title: 'Token message deleted', description: 'The selected saved token message has been removed.' });
+    };
+
+    const removeAllTokenMessages = () => {
+        updateTokenMessageHistory([]);
+        toast({ title: 'Token history cleared', description: 'All saved Super Logout token messages have been deleted.' });
+    };
+
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -269,7 +291,10 @@ export default function SettingsPage() {
                 ...payee,
                 avatar: await embedImage(payee.avatar),
             }))),
-            appSettings: { ...localData.appSettings },
+            appSettings: {
+                ...localData.appSettings,
+                superLogoutTokenMessages: (localData.appSettings.superLogoutTokenMessages || []).map(message => ({ ...message })),
+            },
         };
         const visualKeys: (keyof AppData['appSettings'])[] = [
             'loginBanner', 'getStatementBanner', 'dashboardBanner', 'appLogo', 'appLogo2',
@@ -559,16 +584,42 @@ export default function SettingsPage() {
           </SettingsSection>
           
           <SettingsSection title="Super Logout Token Message History" description="Saved activation messages and timestamps in Indian Standard Time (IST)." defaultOpen>
-              <p className="text-sm text-muted-foreground">Messages saved: {(localData.appSettings.superLogoutTokenMessages || []).length}</p>
+              <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">Messages saved: {(localData.appSettings.superLogoutTokenMessages || []).length}</p>
+                  {(localData.appSettings.superLogoutTokenMessages || []).length > 0 && (
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button type="button" variant="destructive" size="sm">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete all
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete all saved token messages?</AlertDialogTitle>
+                                  <AlertDialogDescription>This permanently removes the saved Super Logout token messages and their timestamps from this device. Export a backup first if you need to keep a copy.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={removeAllTokenMessages}>Delete all messages</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  )}
+              </div>
               {(localData.appSettings.superLogoutTokenMessages || []).length === 0 ? (
                   <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No activation messages have been sent yet.</p>
               ) : (
                   <div className="max-h-[520px] space-y-3 overflow-y-auto">
                       {[...(localData.appSettings.superLogoutTokenMessages || [])].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)).map(message => (
                           <div key={message.id} className="space-y-2 rounded-xl border p-3">
-                              <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-                                  <span>{formatSuperLogoutMessageDate(message.timestamp)}</span>
-                                  <span>{message.recipient}</span>
+                              <div className="flex items-center justify-between gap-2">
+                                  <div className="flex min-w-0 flex-wrap gap-2 text-xs text-muted-foreground">
+                                      <span>{formatSuperLogoutMessageDate(message.timestamp)}</span>
+                                      <span>{message.recipient}</span>
+                                  </div>
+                                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" aria-label="Delete token message" title="Delete token message" onClick={() => removeTokenMessage(message.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                  </Button>
                               </div>
                               <p className="break-all rounded-lg bg-muted p-3 font-mono text-xs leading-5">{message.message}</p>
                           </div>

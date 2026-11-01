@@ -116,13 +116,14 @@ export default function SuperLogoutPage() {
   const [notificationVisible, setNotificationVisible] = useState(false);
   const [draftMessage, setDraftMessage] = useState('');
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
 
   const settings = appData.appSettings;
   const phone = appData.user.contact.phone || '';
   const mobileText = useMemo(() => displayMobile(phone), [phone]);
   const account = appData.accounts.find(item => item.type === 'Savings') || appData.accounts[0];
   const tokenHistory = settings.superLogoutTokenMessages || [];
-  const recentMessages = [...tokenHistory].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)).slice(-4).reverse();
+  const recentMessages = [...tokenHistory].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)).slice(-4);
 
   const screens = [
     settings.superLogoutScreen1 || fallback.screens[0],
@@ -137,6 +138,15 @@ export default function SuperLogoutPage() {
     settings.superLogoutScreen10 || fallback.screens[9],
   ];
   const messageScreen = settings.superLogoutScreen5_1 || fallback.messageScreen;
+
+  useEffect(() => {
+    if (step !== 5.1) return;
+    const frame = window.requestAnimationFrame(() => {
+      const list = messageListRef.current;
+      if (list) list.scrollTop = list.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [step, recentMessages.length, recentMessages[recentMessages.length - 1]?.id]);
 
   useEffect(() => {
     if (step !== 6) return;
@@ -266,7 +276,7 @@ export default function SuperLogoutPage() {
               <span className="shrink-0 text-[#8e8e93]">To:</span>
               <span className="min-w-0 font-medium text-[#28bf58]">+91 70220 75566</span>
             </div>
-            <div className="absolute left-0 top-[19.3%] z-10 flex max-h-[48%] w-full flex-col items-stretch gap-3 overflow-y-auto bg-white px-[4%] pb-2">
+            <div ref={messageListRef} className="absolute left-0 top-[19.3%] z-10 flex max-h-[48%] w-full flex-col items-stretch gap-3 overflow-y-auto bg-white px-[4%] pb-2">
               {recentMessages.map(message => (
                 <div key={message.id} className="flex w-full flex-col items-stretch gap-1">
                   <div className="flex w-full flex-col items-center bg-white text-center text-[clamp(10px,2.9vw,13px)] leading-tight text-[#8e8e93]">
