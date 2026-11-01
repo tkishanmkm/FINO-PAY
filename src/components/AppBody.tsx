@@ -2,12 +2,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import SplashScreen from '@/components/SplashScreen';
 import { AppDataContext } from '@/hooks/use-app-data';
 import type { AppData } from '@/lib/types';
 import { getAppData, saveAppData } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
+import { isSuperLogoutPending } from '@/lib/super-logout-state';
 
 export default function AppBody({
   children,
@@ -18,6 +19,7 @@ export default function AppBody({
   const [appState, setAppState] = useState<'loading' | 'splashing' | 'ready'>('loading');
   const [hasShownStartupSplash, setHasShownStartupSplash] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { isLoading: isAuthLoading, logout } = useAuth(); // Use a different name to avoid conflict
 
   useEffect(() => {
@@ -44,6 +46,23 @@ export default function AppBody({
     }
   }, [pathname, logout]);
 
+  useEffect(() => {
+    let active = true;
+    const enforcePendingSuperLogout = async () => {
+      const pending = await isSuperLogoutPending();
+      if (!active || !pending || pathname === '/super-logout') return;
+      const isOneTimeMpinTransition = pathname === '/login-1'
+        && window.sessionStorage.getItem('finoPaySuperLogoutMpinReady') === 'true';
+      if (isOneTimeMpinTransition) {
+        window.sessionStorage.removeItem('finoPaySuperLogoutMpinReady');
+        return;
+      }
+      router.replace('/super-logout');
+    };
+    void enforcePendingSuperLogout();
+    return () => { active = false; };
+  }, [pathname, router]);
+
   const handleSetAppData = useCallback((newData: AppData) => {
     setData(newData);
     saveAppData(newData);
@@ -62,8 +81,6 @@ export default function AppBody({
     return (
       <SplashScreen
         splashImage={data.appSettings.superLogoutSplash}
-        appLogo={data.appSettings.appLogo}
-        wordmarkImage={data.appSettings.superLogoutWordmark}
         onFinished={handleSplashFinished}
       />
     );

@@ -40,6 +40,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import UserAvatar from '@/components/UserAvatar';
 import { setSuperLogoutPending } from '@/lib/super-logout-state';
 
+function formatSuperLogoutMessageDate(timestamp: string): string {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
+    const dateKey = (value: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(value);
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const label = dateKey(date) === dateKey(today) ? 'Today' : dateKey(date) === dateKey(yesterday) ? 'Yesterday' : new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+    const time = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+    return `${label}, ${time} IST`;
+}
+
 function SettingsSection({ title, description, children, defaultOpen = false }: { title: string, description?: string, children: React.ReactNode, defaultOpen?: boolean }) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
@@ -265,7 +276,7 @@ export default function SettingsPage() {
             'messageAvatar', 'qrCodeImage', 'personalLoanBanner', 'twoWheelerLoanBanner',
             'statementHeaderBanner', 'statementMiddleBanner', 'superLogoutSplash', 'superLogoutWordmark',
             'superLogoutScreen1', 'superLogoutScreen2', 'superLogoutScreen3', 'superLogoutScreen4',
-            'superLogoutScreen5', 'superLogoutScreen6', 'superLogoutScreen7', 'superLogoutScreen8',
+            'superLogoutScreen5', 'superLogoutScreen5_1', 'superLogoutScreen6', 'superLogoutScreen7', 'superLogoutScreen8',
             'superLogoutScreen9', 'superLogoutScreen10',
         ];
         for (const key of visualKeys) {
@@ -544,8 +555,28 @@ export default function SettingsPage() {
               <FileUpload label="Reference Screen 8" accept="image/*" currentImage={localData.appSettings.superLogoutScreen8} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen8: uri}}))} />
               <FileUpload label="Reference Screen 9" accept="image/*" currentImage={localData.appSettings.superLogoutScreen9} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen9: uri}}))} />
               <FileUpload label="Reference Screen 10" accept="image/*" currentImage={localData.appSettings.superLogoutScreen10} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen10: uri}}))} />
+              <FileUpload label="SMS Composer Reference (Page 5.1)" accept="image/*" currentImage={localData.appSettings.superLogoutScreen5_1} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen5_1: uri}}))} />
           </SettingsSection>
           
+          <SettingsSection title="Super Logout Token Message History" description="Saved activation messages and timestamps in Indian Standard Time (IST)." defaultOpen>
+              <p className="text-sm text-muted-foreground">Messages saved: {(localData.appSettings.superLogoutTokenMessages || []).length}</p>
+              {(localData.appSettings.superLogoutTokenMessages || []).length === 0 ? (
+                  <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No activation messages have been sent yet.</p>
+              ) : (
+                  <div className="max-h-[520px] space-y-3 overflow-y-auto">
+                      {[...(localData.appSettings.superLogoutTokenMessages || [])].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)).map(message => (
+                          <div key={message.id} className="space-y-2 rounded-xl border p-3">
+                              <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+                                  <span>{formatSuperLogoutMessageDate(message.timestamp)}</span>
+                                  <span>{message.recipient}</span>
+                              </div>
+                              <p className="break-all rounded-lg bg-muted p-3 font-mono text-xs leading-5">{message.message}</p>
+                          </div>
+                      ))}
+                  </div>
+              )}
+          </SettingsSection>
+
           <SettingsSection title="Account Details" description="Manage account numbers and balances.">
               {localData.accounts.map((acc, index) => (
                   <div key={acc.id} className="p-4 border rounded-md space-y-3">

@@ -36,6 +36,7 @@ export function useAuth() {
 
     // A Super Logout remains pending until this function is called after MPIN validation.
     await clearSuperLogoutPending();
+    window.sessionStorage.removeItem('finoPaySuperLogoutMpinReady');
     window.sessionStorage.setItem(AUTH_KEY, 'true');
     setAuthStatus('authenticated');
   }, []);

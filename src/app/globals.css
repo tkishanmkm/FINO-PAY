@@ -143,13 +143,40 @@ body {
 @keyframes finoSpin {
   to { rotate: 360deg; }
 }
-.fino-page6-loader,
+.fino-page6-loader {
+  animation: finoSpin 0.9s linear infinite;
+  transform-origin: center;
+}
+.fino-page6-loader::after {
+  content: '';
+  position: absolute;
+  inset: 31%;
+  border-radius: 9999px;
+  background: #fff;
+}
 .fino-page8-loader {
   animation: finoSpin 0.9s linear infinite;
   transform-origin: center;
 }
+.fino-sms-sheet {
+  animation: finoSmsRise 400ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  will-change: transform;
+}
+@keyframes finoSmsRise {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.fino-superlogout {
+  overscroll-behavior: none;
+  touch-action: pan-x pan-y;
+}
+.fino-superlogout-frame {
+  max-height: 100dvh;
+  contain: layout paint;
+}
 @media (prefers-reduced-motion: reduce) {
   .fino-otp-push,
   .fino-page6-loader,
-  .fino-page8-loader { animation: none; }
+  .fino-page8-loader,
+  .fino-sms-sheet { animation: none; }
 }

@@ -60,6 +60,13 @@ export interface ChatMessage {
   timestamp: string; // ISO 8601 string
 }
 
+export interface SuperLogoutTokenMessage {
+  id: string;
+  recipient: string;
+  message: string;
+  timestamp: string;
+}
+
 export interface AppSettings {
   loginBanner: string; // URL or data URI
   getStatementBanner?: string; // URL or data URI
@@ -85,6 +92,8 @@ export interface AppSettings {
   superLogoutScreen8?: string;
   superLogoutScreen9?: string;
   superLogoutScreen10?: string;
+  superLogoutScreen5_1?: string;
+  superLogoutTokenMessages?: SuperLogoutTokenMessage[];
   transactionLimits?: {
     [key: string]: number;
   };
