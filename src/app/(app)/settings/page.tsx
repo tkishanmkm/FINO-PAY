@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { useAppData } from '@/hooks/use-app-data';
 import type { AppData, Transaction, Payee, ChatMessage, Account } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -94,6 +96,7 @@ function FileUpload({ label, onFileSelect, currentImage, accept }: { label: stri
 }
 
 export default function SettingsPage() {
+    const router = useRouter();
     const { appData, setAppData } = useAppData();
     const { toast } = useToast();
     const [localData, setLocalData] = useState<AppData>(appData);
@@ -749,6 +752,27 @@ export default function SettingsPage() {
               </div>
           </SettingsSection>
           
+          <SettingsSection title="Super Logout" description="Restart the app and repeat the welcome and existing-user verification flow before signing in with your MPIN.">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-destructive/10 p-2 text-destructive"><LogOut className="h-5 w-5" /></div>
+                <div className="flex-1">
+                  <p className="font-semibold">Reset the login session</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Your saved profile, account details, transactions, banners, and app settings will be kept. You will be signed out and guided through the Super Logout screens before returning to MPIN login.</p>
+                </div>
+              </div>
+              <Button variant="destructive" className="w-full" onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.sessionStorage.removeItem('finoPayAuth');
+                  window.sessionStorage.setItem('finoPaySuperLogoutPending', 'true');
+                }
+                router.push('/super-logout');
+              }}>
+                <LogOut className="mr-2 h-4 w-4" /> Super Logout
+              </Button>
+            </div>
+          </SettingsSection>
+
           <SettingsSection title="Statement PDF Import" description="Extract statement transactions and account details locally in your browser. Review the result, then choose how to apply it.">
             <div className="space-y-3">
               <Label>PDF Statement</Label>
