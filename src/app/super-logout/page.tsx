@@ -97,6 +97,7 @@ export default function SuperLogoutPage() {
   const { appData, setAppData } = useAppData();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [loadedStep, setLoadedStep] = useState<number | null>(null);
   const [seconds, setSeconds] = useState(90);
   const [otp, setOtp] = useState(['', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -234,11 +235,20 @@ export default function SuperLogoutPage() {
   };
 
   return (
-    <main className="fino-superlogout fixed inset-0 flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-black">
+    <main className="fino-superlogout fixed inset-0 flex h-[100dvh] w-[100vw] items-stretch justify-stretch overflow-hidden bg-white">
       <div className="fino-superlogout-frame relative overflow-hidden bg-white">
         {step === 5.1 ? (
-          <div className="fino-sms-sheet absolute inset-0">
-            <img src={messageScreen} alt="FinoPay SMS composer reference" draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
+          <div
+            className={loadedStep === step ? "fino-sms-sheet absolute inset-0" : "invisible absolute inset-0"}
+          >
+            <img
+              src={messageScreen}
+              alt="FinoPay SMS composer reference"
+              draggable={false}
+              onLoad={() => setLoadedStep(step)}
+              onError={() => setLoadedStep(step)}
+              className="absolute inset-0 h-full w-full select-none object-fill"
+            />
             <button aria-label="Cancel message" onClick={() => setStep(5)} className="absolute right-[2%] top-[5.1%] z-20 h-[5.5%] w-[19%] bg-transparent" />
             <div className="absolute left-[10.5%] top-[13.1%] z-10 flex h-[4.3%] w-[70%] items-center bg-white text-[clamp(12px,3.4vw,16px)]">
               <span className="font-medium text-[#28bf58]">{mobileText}</span>
@@ -262,8 +272,20 @@ export default function SuperLogoutPage() {
             <button aria-label="Send activation SMS" onClick={sendActivationMessage} className="absolute right-[3.2%] top-[90.5%] z-20 h-[6.2%] w-[10%] rounded-full bg-transparent" />
           </div>
         ) : (
-          <>
-            <img src={screens[Math.floor(step) - 1]} alt={'FinoPay onboarding screen ' + step} draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
+          <div
+            className="absolute inset-0"
+            style={{ visibility: loadedStep === step ? 'visible' : 'hidden' }}
+          >
+            <img
+              key={step}
+              src={step === 6 ? screens[4] : screens[Math.floor(step) - 1]}
+              alt={step === 6 ? 'Verifying mobile number' : 'FinoPay onboarding screen ' + step}
+              draggable={false}
+              onLoad={() => setLoadedStep(step)}
+              onError={() => setLoadedStep(step)}
+              className="absolute inset-0 h-full w-full select-none object-fill"
+              style={step === 6 ? { filter: 'brightness(0.38)' } : undefined}
+            />
 
             {step >= 1 && step <= 3 && (
               <>
@@ -282,7 +304,11 @@ export default function SuperLogoutPage() {
             {step === 5 && <button aria-label="Send verification SMS" onClick={openSmsComposer} className="absolute bottom-[5.5%] left-[5%] z-10 h-[8%] w-[90%] bg-transparent" />}
 
             {step === 6 && (
-              <div aria-label="Loading" className="fino-page6-loader absolute left-1/2 top-[36%] z-20 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-[4px] border-white border-t-[#4136d0] bg-transparent shadow-[0_0_0_5px_rgba(65,54,208,0.12)]" />
+              <div aria-label="Loading" className="absolute inset-0 z-20 flex items-center justify-center bg-black/20">
+                <div className="flex h-[78px] w-[78px] items-center justify-center rounded-full bg-white shadow-[0_8px_32px_rgba(0,0,0,0.22)]">
+                  <div className="fino-page6-loader h-10 w-10 rounded-full border-[4px] border-[#e7e5ff] border-t-[#4136d0]" />
+                </div>
+              </div>
             )}
 
             {step === 7 && (
@@ -347,10 +373,9 @@ export default function SuperLogoutPage() {
 
             {step === 8 && (
               <>
-                <div className="absolute left-[9%] top-[33.1%] z-10 flex h-[3.5%] w-[82%] items-center justify-center bg-[#333333] px-1 text-center text-[clamp(9px,2.8vw,12px)] text-[#a4a4a4]">
+                <div className="absolute left-[9%] top-[33.1%] z-10 flex h-[3.5%] w-[82%] items-center justify-center bg-transparent px-1 text-center text-[clamp(9px,2.8vw,12px)] text-[#686868]">
                   Enter the OTP sent to {mobileText}
                 </div>
-                <div aria-label="Redirecting" className="fino-page8-loader absolute left-[35%] top-[94.5%] z-20 h-[2.1%] w-[4.2%] rounded-full border-[3px] border-[#e2ddff] border-t-[#5145b2]" />
               </>
             )}
 
@@ -376,7 +401,7 @@ export default function SuperLogoutPage() {
                 <button aria-label="Proceed to MPIN login" onClick={finish} className="absolute bottom-[5.5%] left-[8%] z-20 h-[8%] w-[84%] bg-transparent" />
               </>
             )}
-          </>
+          </div>
         )}
       </div>
     </main>
