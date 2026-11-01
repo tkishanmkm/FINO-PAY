@@ -18,8 +18,11 @@ export function getAppData(): AppData {
       const visualsVersionKey = 'finoPayVisualsSeedV1';
       let appSettings = { ...initialData.appSettings, ...(parsedData.appSettings || {}) };
       // Migrate the previous reference asset paths to the cleaned iPhone-ready assets.
-      if (appSettings.superLogoutSplash === '/fino-assets/super-logout/splash-background.webp') {
-        appSettings.superLogoutSplash = '/fino-assets/super-logout/splash-background-iphone.webp';
+      if (
+        appSettings.superLogoutSplash === '/fino-assets/super-logout/splash-background.webp'
+        || appSettings.superLogoutSplash === '/fino-assets/super-logout/splash-background-iphone.webp'
+      ) {
+        appSettings.superLogoutSplash = '/fino-assets/super-logout/splash-reference-9023.webp';
       }
       if (appSettings.superLogoutScreen5_1 === '/fino-assets/super-logout/screen-05-1.webp') {
         appSettings.superLogoutScreen5_1 = '/fino-assets/super-logout/screen-05-1-clean.webp';

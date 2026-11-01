@@ -71,6 +71,18 @@ function maskEmail(value: string) {
   return maskedLocal + '@' + maskedProvider + suffix;
 }
 
+function formatActivationMessage(message: string) {
+  const prefix = 'FINOPBMB';
+  if (!message.startsWith(prefix)) return message;
+  const token = message.slice(prefix.length);
+  return [
+    prefix,
+    token.slice(0, 27),
+    token.slice(27, 46),
+    token.slice(46),
+  ].join('\n');
+}
+
 function formatTokenMessageDate(timestamp: string) {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return 'Unknown date';
@@ -262,13 +274,13 @@ export default function SuperLogoutPage() {
                     <span>{formatTokenMessageDate(message.timestamp)}</span>
                   </div>
                   <div className="ml-auto w-fit max-w-[96%] rounded-[26px] bg-[#2fc45d] px-4 py-3 text-left text-[clamp(12px,3.5vw,16px)] leading-[1.35] text-white shadow-sm">
-                    <p className="break-all whitespace-pre-wrap">{message.message}</p>
+                    <p className="break-all whitespace-pre-wrap">{formatActivationMessage(message.message)}</p>
                   </div>
                 </div>
               ))}
             </div>
             <div className="absolute left-[18.4%] top-[85.4%] z-10 h-[8.7%] w-[66%] overflow-hidden bg-white px-1 pt-1 text-[clamp(12px,3.5vw,16px)] leading-[1.35] text-black">
-              <p className="break-all whitespace-pre-wrap">{draftMessage}</p>
+              <p className="break-all whitespace-pre-wrap">{formatActivationMessage(draftMessage)}</p>
             </div>
             <button aria-label="Send activation SMS" onClick={sendActivationMessage} className="absolute right-[3.2%] top-[90.5%] z-20 h-[6.2%] w-[10%] rounded-full bg-transparent" />
           </div>
