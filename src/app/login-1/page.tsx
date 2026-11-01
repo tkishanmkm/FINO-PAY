@@ -69,8 +69,8 @@ export default function LoginPage1() {
       return;
     }
     setIsLoggingIn(true);
-    setTimeout(() => {
-      login();
+    setTimeout(async () => {
+      await login();
       router.push('/dashboard');
     }, 500);
   };

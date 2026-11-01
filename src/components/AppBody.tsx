@@ -16,6 +16,7 @@ export default function AppBody({
 }>) {
   const [data, setData] = useState<AppData | null>(null);
   const [appState, setAppState] = useState<'loading' | 'splashing' | 'ready'>('loading');
+  const [hasShownStartupSplash, setHasShownStartupSplash] = useState(false);
   const pathname = usePathname();
   const { isLoading: isAuthLoading, logout } = useAuth(); // Use a different name to avoid conflict
 
@@ -32,7 +33,7 @@ export default function AppBody({
     (window as any).handleLogoutLegacy = handleLogoutLegacy;
 
     // Conditionally show splash screen based on path
-    if (pathname === '/' || pathname === '/login-1') {
+    if (!hasShownStartupSplash || pathname === '/super-logout') {
       setAppState('splashing');
     } else {
       setAppState('ready');
@@ -49,6 +50,7 @@ export default function AppBody({
   }, []);
 
   const handleSplashFinished = useCallback(() => {
+    setHasShownStartupSplash(true);
     setAppState('ready');
   }, []);
 
@@ -59,7 +61,9 @@ export default function AppBody({
   if (appState === 'splashing') {
     return (
       <SplashScreen
+        splashImage={data.appSettings.superLogoutSplash}
         appLogo={data.appSettings.appLogo}
+        wordmarkImage={data.appSettings.superLogoutWordmark}
         onFinished={handleSplashFinished}
       />
     );

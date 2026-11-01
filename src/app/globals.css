@@ -107,37 +107,49 @@ body {
 }
 
 .fino-superlogout-frame {
-  width: min(100vw, 46.1268dvh, 430px);
+  width: min(100vw, 46.1268dvh);
   aspect-ratio: 1179 / 2556;
+  flex: 0 0 auto;
 }
-.fino-splash-background {
-  transform: scale(1.055);
+.fino-universal-splash-star {
+  left: 23.8%;
+  top: 41.7%;
+  width: 25.2%;
+  height: 13.4%;
 }
-.fino-splash-wordmark {
-  left: 51.5%;
-  top: 43.5%;
-  width: 25%;
-  height: 12%;
+.fino-universal-splash-wordmark {
+  left: 52.5%;
+  top: 43.2%;
+  width: 23.7%;
+  height: 9.2%;
 }
-.fino-screen4-wordmark,
-.fino-screen10-wordmark {
-  left: 50.5%;
-  top: 11.6%;
-  width: 22%;
-  height: 9%;
+.fino-universal-splash-tagline {
+  left: 0;
+  top: 56.1%;
+  font-size: clamp(11px, 3vw, 14px);
 }
 .fino-details-card {
   background: rgba(70, 44, 126, 0.99);
 }
 @keyframes finoOtpPush {
   0% { transform: translateY(-125%); opacity: 0; }
-  14% { transform: translateY(0); opacity: 1; }
-  72% { transform: translateY(0); opacity: 1; }
+  12% { transform: translateY(0); opacity: 1; }
+  88% { transform: translateY(0); opacity: 1; }
   100% { transform: translateY(-125%); opacity: 0; }
 }
 .fino-otp-push {
-  animation: finoOtpPush 4.2s ease-in-out both;
+  animation: finoOtpPush 3.8s ease-in-out both;
+}
+@keyframes finoSpin {
+  to { rotate: 360deg; }
+}
+.fino-page6-loader,
+.fino-page8-loader {
+  animation: finoSpin 0.9s linear infinite;
+  transform-origin: center;
 }
 @media (prefers-reduced-motion: reduce) {
-  .fino-otp-push { animation: none; }
+  .fino-otp-push,
+  .fino-page6-loader,
+  .fino-page8-loader { animation: none; }
 }

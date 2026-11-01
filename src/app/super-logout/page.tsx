@@ -57,7 +57,7 @@ export default function SuperLogoutPage() {
   const router = useRouter();
   const { appData } = useAppData();
   const { toast } = useToast();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [seconds, setSeconds] = useState(90);
   const [otp, setOtp] = useState(['', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -69,8 +69,6 @@ export default function SuperLogoutPage() {
   const mobileText = useMemo(() => displayMobile(phone), [phone]);
   const account = appData.accounts.find(item => item.type === 'Savings') || appData.accounts[0];
 
-  const splash = settings.superLogoutSplash || fallback.splash;
-  const wordmark = settings.superLogoutWordmark || fallback.wordmark;
   const screens = [
     settings.superLogoutScreen1 || fallback.screens[0],
     settings.superLogoutScreen2 || fallback.screens[1],
@@ -85,21 +83,15 @@ export default function SuperLogoutPage() {
   ];
 
   useEffect(() => {
-    if (step !== 0) return;
-    const timer = window.setTimeout(() => setStep(1), 2400);
-    return () => window.clearTimeout(timer);
-  }, [step]);
-
-  useEffect(() => {
     if (step !== 6) return;
     const timer = window.setTimeout(() => {
       const code = String(Math.floor(1000 + Math.random() * 9000));
       setGeneratedOtp(code);
       setOtp(['', '', '', '']);
       setSeconds(90);
-      setNotificationVisible(true);
+      setNotificationVisible(false);
       setStep(7);
-    }, 3000);
+    }, 4000);
     return () => window.clearTimeout(timer);
   }, [step]);
 
@@ -110,14 +102,20 @@ export default function SuperLogoutPage() {
   }, [step, seconds]);
 
   useEffect(() => {
+    if (step !== 7) return;
+    const enterTimer = window.setTimeout(() => setNotificationVisible(true), 2000);
+    return () => window.clearTimeout(enterTimer);
+  }, [step]);
+
+  useEffect(() => {
     if (!notificationVisible) return;
-    const timer = window.setTimeout(() => setNotificationVisible(false), 4300);
+    const timer = window.setTimeout(() => setNotificationVisible(false), 3800);
     return () => window.clearTimeout(timer);
   }, [notificationVisible]);
 
   useEffect(() => {
     if (step !== 8) return;
-    const timer = window.setTimeout(() => setStep(9), 2800);
+    const timer = window.setTimeout(() => setStep(9), 4000);
     return () => window.clearTimeout(timer);
   }, [step]);
 
@@ -157,29 +155,20 @@ export default function SuperLogoutPage() {
     setGeneratedOtp(code);
     setOtp(['', '', '', '']);
     setSeconds(90);
-    setNotificationVisible(true);
+    setNotificationVisible(false);
+    window.setTimeout(() => setNotificationVisible(true), 2000);
     inputRefs.current[0]?.focus();
   };
 
   const finish = () => {
-    window.sessionStorage.removeItem('finoPaySuperLogoutPending');
+    // Keep the IndexedDB pending flag active until the existing MPIN flow succeeds.
     router.replace('/login-1');
   };
 
   return (
     <main className="fino-superlogout fixed inset-0 flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-black">
-      <div className="fino-superlogout-frame relative h-[100dvh] w-full overflow-hidden bg-white">
-        {step === 0 ? (
-          <>
-            <img src={splash} alt="FinoPay splash screen" draggable={false} className="fino-splash-background absolute inset-0 h-full w-full select-none object-fill" />
-            <img src={wordmark} alt="FinoPay" draggable={false} className="fino-splash-wordmark pointer-events-none absolute select-none object-contain" />
-          </>
-        ) : (
-          <>
-            <img src={screens[step - 1]} alt={'FinoPay onboarding screen ' + step} draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
-            {(step === 4 || step === 10) && <img src={wordmark} alt="FinoPay" draggable={false} className={'pointer-events-none absolute select-none object-contain ' + (step === 4 ? 'fino-screen4-wordmark' : 'fino-screen10-wordmark')} />}
-          </>
-        )}
+      <div className="fino-superlogout-frame relative overflow-hidden bg-white">
+        <img src={screens[step - 1]} alt={'FinoPay onboarding screen ' + step} draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
 
         {step >= 1 && step <= 3 && (
           <>
@@ -197,10 +186,14 @@ export default function SuperLogoutPage() {
 
         {step === 5 && <button aria-label="Send verification SMS" onClick={sendSms} className="absolute bottom-[5.5%] left-[5%] z-10 h-[8%] w-[90%] bg-transparent" />}
 
+        {step === 6 && (
+          <div aria-label="Loading" className="fino-page6-loader absolute left-1/2 top-1/2 z-20 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-[4px] border-white/90 border-t-[#4136d0] shadow-[0_0_0_5px_rgba(65,54,208,0.12)]" />
+        )}
+
         {step === 7 && (
           <>
             <button aria-label="Back to SMS verification" onClick={() => setStep(5)} className="absolute left-[5%] top-[7%] z-10 h-[7%] w-[20%] bg-transparent" />
-            <div className="absolute left-[9%] top-[33.1%] z-10 flex h-[3.5%] w-[82%] items-center justify-center bg-white px-1 text-center text-[clamp(10px,3.4vw,15px)] font-normal text-[#454545]">
+            <div className="absolute left-[9%] top-[33.1%] z-10 flex h-[3.5%] w-[82%] items-center justify-center bg-white px-1 text-center text-[clamp(9px,2.8vw,12px)] font-normal text-[#454545]">
               Enter the OTP sent to {mobileText}
             </div>
             <div className="absolute left-[16.4%] top-[38.1%] z-10 flex h-[7.8%] w-[67.2%] gap-[3.2%]">
@@ -226,7 +219,8 @@ export default function SuperLogoutPage() {
                   inputMode="numeric"
                   autoComplete={index === 0 ? 'one-time-code' : 'off'}
                   maxLength={1}
-                  className="h-full min-w-0 flex-1 rounded-[12px] border border-[#d8ccff] bg-white/90 text-center text-[clamp(17px,5.4vw,25px)] font-semibold text-[#4540a3] outline-none focus:border-[#5549c4]"
+                  placeholder="–"
+                  className="h-full min-w-0 flex-1 rounded-[12px] border border-[#d8ccff] bg-white/90 text-center text-[clamp(12px,3.4vw,16px)] font-semibold text-[#4540a3] outline-none placeholder:text-[#bdbdbd] focus:border-[#5549c4]"
                 />
               ))}
             </div>
@@ -234,7 +228,15 @@ export default function SuperLogoutPage() {
               {seconds} sec
             </div>
             {seconds <= 0 && <button aria-label="Resend OTP" onClick={resendOtp} className="absolute left-[18%] top-[52.5%] z-10 h-[4%] w-[35%] bg-transparent" />}
-            <button aria-label="Verify OTP" onClick={verifyOtp} disabled={otp.join('').length !== 4 || seconds <= 0} className="absolute bottom-[5.5%] left-[7%] z-10 h-[8%] w-[86%] bg-transparent disabled:cursor-not-allowed" />
+            <button
+              aria-label="Verify OTP"
+              onClick={verifyOtp}
+              disabled={otp.join('').length !== 4 || seconds <= 0}
+              className="absolute bottom-[6.6%] left-[7%] z-20 flex h-[5.8%] w-[86%] items-center justify-center rounded-full text-[clamp(13px,3.6vw,16px)] font-semibold text-white transition-colors disabled:cursor-not-allowed"
+              style={{ backgroundColor: otp.join('').length === 4 && seconds > 0 ? '#4137d0' : '#a5a0e9' }}
+            >
+              Verify
+            </button>
             {notificationVisible && (
               <div className="fino-otp-push absolute left-[2%] top-[2%] z-30 flex w-[96%] items-center gap-3 rounded-[22px] bg-[#171719] px-4 py-3 text-white shadow-2xl">
                 {settings.messageAvatar ? <img src={settings.messageAvatar} alt="Saved OTP avatar" className="h-11 w-11 shrink-0 rounded-full border border-white/20 object-cover" /> : <UserAvatar user={appData.user} className="h-11 w-11" />}
@@ -247,19 +249,23 @@ export default function SuperLogoutPage() {
           </>
         )}
 
+        {step === 8 && (
+          <div aria-label="Redirecting" className="fino-page8-loader absolute left-[34.5%] top-[92.7%] z-20 h-[2.1%] w-[4.8%] rounded-full border-[3px] border-[#e2ddff] border-t-[#5145b2]" />
+        )}
+
         {step === 9 && <button aria-label="Continue after successful registration" onClick={() => setStep(10)} className="absolute bottom-[5.5%] left-[8%] z-10 h-[8%] w-[84%] bg-transparent" />}
 
         {step === 10 && (
           <>
             <section className="fino-details-card absolute left-[4.5%] top-[31%] z-10 h-[23.5%] w-[91%] rounded-[24px] px-[4.3%] text-white">
-              <h1 className="absolute left-0 right-0 top-[12%] text-center text-[clamp(15px,4vw,18px)] font-bold">{appData.user.name || 'Account holder'}</h1>
-              <div className="absolute left-[4.5%] right-[4.5%] top-[35%] flex items-center justify-between gap-2 text-[clamp(11px,3.1vw,14px)]">
+              <h1 className="absolute left-0 right-0 top-[12%] text-center text-[clamp(12px,3.2vw,15px)] font-bold">{appData.user.name || 'Account holder'}</h1>
+              <div className="absolute left-[4.5%] right-[4.5%] top-[35%] flex items-center justify-between gap-2 text-[clamp(9px,2.7vw,12px)]">
                 <span className="text-[#c2b5df]">Customer ID</span><strong className="text-right">{maskCustomerId(appData.user.customerId)}</strong>
               </div>
-              <div className="absolute left-[4.5%] right-[4.5%] top-[55%] flex items-center justify-between gap-2 text-[clamp(10px,3vw,14px)]">
+              <div className="absolute left-[4.5%] right-[4.5%] top-[55%] flex items-center justify-between gap-2 text-[clamp(9px,2.6vw,11px)]">
                 <span className="text-[#c2b5df]">Email</span><strong className="max-w-[62%] break-all text-right">{maskEmail(appData.user.contact.email)}</strong>
               </div>
-              <div className="absolute left-[4.5%] right-[4.5%] top-[77%] flex items-center justify-between gap-2 text-[clamp(11px,3.1vw,14px)]">
+              <div className="absolute left-[4.5%] right-[4.5%] top-[77%] flex items-center justify-between gap-2 text-[clamp(9px,2.7vw,12px)]">
                 <span className="text-[#c2b5df]">Phone</span><strong className="text-right">{maskMobile(phone)}</strong>
               </div>
               <div className="absolute left-[4.5%] right-[4.5%] top-[48%] h-px bg-white/50" />

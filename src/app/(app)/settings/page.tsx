@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import UserAvatar from '@/components/UserAvatar';
+import { setSuperLogoutPending } from '@/lib/super-logout-state';
 
 function SettingsSection({ title, description, children, defaultOpen = false }: { title: string, description?: string, children: React.ReactNode, defaultOpen?: boolean }) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -779,12 +780,14 @@ export default function SettingsPage() {
                   <p className="mt-1 text-sm text-muted-foreground">Your saved profile, account details, transactions, banners, and app settings will be kept. You will be signed out and guided through the Super Logout screens before returning to MPIN login.</p>
                 </div>
               </div>
-              <Button variant="destructive" className="w-full" onClick={() => {
-                if (typeof window !== 'undefined') {
+              <Button variant="destructive" className="w-full" onClick={async () => {
+                try {
+                  await setSuperLogoutPending();
                   window.sessionStorage.removeItem('finoPayAuth');
-                  window.sessionStorage.setItem('finoPaySuperLogoutPending', 'true');
+                  router.push('/super-logout');
+                } catch {
+                  toast({ variant: 'destructive', title: 'Could not start Super Logout', description: 'IndexedDB is unavailable. Please enable site storage and try again.' });
                 }
-                router.push('/super-logout');
               }}>
                 <LogOut className="mr-2 h-4 w-4" /> Super Logout
               </Button>
