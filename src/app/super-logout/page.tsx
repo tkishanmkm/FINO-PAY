@@ -1,28 +1,107 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Clock3, LoaderCircle, MessageSquareText, ShieldCheck, Smartphone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAppData } from '@/hooks/use-app-data';
+import { useToast } from '@/hooks/use-toast';
 import UserAvatar from '@/components/UserAvatar';
 
-const introTitles = ['Welcome to FinoPay', 'Banking made simple', 'Secure banking'];
+const fallback = {
+  splash: '/fino-assets/super-logout/splash-background.webp',
+  wordmark: '/fino-assets/super-logout/fino-pay-wordmark.webp',
+  screens: [
+    '/fino-assets/super-logout/screen-01.webp',
+    '/fino-assets/super-logout/screen-02.webp',
+    '/fino-assets/super-logout/screen-03.webp',
+    '/fino-assets/super-logout/screen-04.webp',
+    '/fino-assets/super-logout/screen-05.webp',
+    '/fino-assets/super-logout/screen-06.webp',
+    '/fino-assets/super-logout/screen-07.webp',
+    '/fino-assets/super-logout/screen-08.webp',
+    '/fino-assets/super-logout/screen-09.webp',
+    '/fino-assets/super-logout/screen-10.webp',
+  ],
+};
+
+function displayMobile(value: string) {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) return '+91 ' + digits.slice(2);
+  if (digits.length === 10) return '+91 ' + digits;
+  return value || 'Mobile number not saved';
+}
+
+function maskMobile(value: string) {
+  const digits = value.replace(/\D/g, '');
+  return digits ? '+91 XXX XXX XX' + digits.slice(-2) : 'Not saved';
+}
+
+function maskCustomerId(value: string) {
+  if (!value) return 'Not saved';
+  return value.length < 3 ? value : '*'.repeat(Math.min(10, value.length - 2)) + value.slice(-2);
+}
+
+function maskEmail(value: string) {
+  if (!value || !value.includes('@')) return 'Not saved';
+  const parts = value.split('@');
+  const local = parts[0];
+  const domain = parts[1];
+  const dot = domain.lastIndexOf('.');
+  const provider = dot > 0 ? domain.slice(0, dot) : domain;
+  const suffix = dot > 0 ? domain.slice(dot) : '';
+  const maskedLocal = local.length < 3 ? local : local[0] + '*'.repeat(Math.min(14, local.length - 2)) + local.slice(-1);
+  const maskedProvider = provider.length < 2 ? provider : provider[0] + '***';
+  return maskedLocal + '@' + maskedProvider + suffix;
+}
 
 export default function SuperLogoutPage() {
   const router = useRouter();
   const { appData } = useAppData();
-  const [step, setStep] = useState(1);
-  const [sending, setSending] = useState(false);
+  const { toast } = useToast();
+  const [step, setStep] = useState(0);
   const [seconds, setSeconds] = useState(90);
-  const [otp, setOtp] = useState('');
-  const [loadingProgress, setLoadingProgress] = useState(false);
-  const phone = appData.user.contact.phone || 'Mobile number not saved';
-  const maskedPhone = useMemo(() => {
-    const digits = phone.replace(/\D/g, '');
-    return digits.length >= 4 ? digits.slice(0, 2) + '••••••' + digits.slice(-2) : phone;
-  }, [phone]);
-  const account = appData.accounts[0];
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [notificationVisible, setNotificationVisible] = useState(false);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  const settings = appData.appSettings;
+  const phone = appData.user.contact.phone || '';
+  const mobileText = useMemo(() => displayMobile(phone), [phone]);
+  const account = appData.accounts.find(item => item.type === 'Savings') || appData.accounts[0];
+
+  const splash = settings.superLogoutSplash || fallback.splash;
+  const wordmark = settings.superLogoutWordmark || fallback.wordmark;
+  const screens = [
+    settings.superLogoutScreen1 || fallback.screens[0],
+    settings.superLogoutScreen2 || fallback.screens[1],
+    settings.superLogoutScreen3 || fallback.screens[2],
+    settings.superLogoutScreen4 || fallback.screens[3],
+    settings.superLogoutScreen5 || fallback.screens[4],
+    settings.superLogoutScreen6 || fallback.screens[5],
+    settings.superLogoutScreen7 || fallback.screens[6],
+    settings.superLogoutScreen8 || fallback.screens[7],
+    settings.superLogoutScreen9 || fallback.screens[8],
+    settings.superLogoutScreen10 || fallback.screens[9],
+  ];
+
+  useEffect(() => {
+    if (step !== 0) return;
+    const timer = window.setTimeout(() => setStep(1), 2400);
+    return () => window.clearTimeout(timer);
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== 6) return;
+    const timer = window.setTimeout(() => {
+      const code = String(Math.floor(1000 + Math.random() * 9000));
+      setGeneratedOtp(code);
+      setOtp(['', '', '', '']);
+      setSeconds(90);
+      setNotificationVisible(true);
+      setStep(7);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [step]);
 
   useEffect(() => {
     if (step !== 7 || seconds <= 0) return;
@@ -31,99 +110,166 @@ export default function SuperLogoutPage() {
   }, [step, seconds]);
 
   useEffect(() => {
+    if (!notificationVisible) return;
+    const timer = window.setTimeout(() => setNotificationVisible(false), 4300);
+    return () => window.clearTimeout(timer);
+  }, [notificationVisible]);
+
+  useEffect(() => {
     if (step !== 8) return;
-    setLoadingProgress(true);
-    const timer = window.setTimeout(() => { setLoadingProgress(false); setStep(9); }, 3000);
+    const timer = window.setTimeout(() => setStep(9), 2800);
     return () => window.clearTimeout(timer);
   }, [step]);
 
   const sendSms = () => {
-    if (sending) return;
-    setSending(true);
-    window.setTimeout(() => { setSending(false); setStep(6); }, 3000);
+    if (!phone.trim()) {
+      toast({ variant: 'destructive', title: 'Mobile number not saved', description: 'Add your registered mobile number in FinoPay Settings before continuing.' });
+      return;
+    }
+    setStep(6);
   };
+
+  const changeOtp = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    setOtp(current => {
+      const next = [...current];
+      next[index] = digit;
+      return next;
+    });
+    if (digit && index < 3) inputRefs.current[index + 1]?.focus();
+  };
+
+  const verifyOtp = () => {
+    if (seconds <= 0) {
+      toast({ variant: 'destructive', title: 'OTP expired', description: 'Request a new verification code to continue.' });
+      return;
+    }
+    if (otp.join('') !== generatedOtp || generatedOtp.length !== 4) {
+      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect. Please try again.' });
+      return;
+    }
+    setNotificationVisible(false);
+    setStep(8);
+  };
+
+  const resendOtp = () => {
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    setGeneratedOtp(code);
+    setOtp(['', '', '', '']);
+    setSeconds(90);
+    setNotificationVisible(true);
+    inputRefs.current[0]?.focus();
+  };
+
   const finish = () => {
     window.sessionStorage.removeItem('finoPaySuperLogoutPending');
     router.replace('/login-1');
   };
 
   return (
-    <main className="min-h-[100dvh] w-full overflow-hidden bg-[#f7f8fa] text-[#202a37]">
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col bg-white shadow-xl">
-        <header className="flex items-center justify-between bg-[#e31e36] px-5 py-4 text-white">
-          <div className="flex items-center gap-3">
-            {appData.appSettings.appLogo ? <img src={appData.appSettings.appLogo} alt="FinoPay logo" className="h-10 w-10 rounded-full bg-white object-contain p-1" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-white font-bold text-[#e31e36]">F</div>}
-            <div className="leading-tight"><div className="text-lg font-semibold">Fino</div><div className="text-xl font-bold">pay</div></div>
-          </div>
-          <span className="text-xs font-medium opacity-90">Step {step} of 10</span>
-        </header>
-        <div className="h-1.5 w-full bg-[#f6d9de]"><div className="h-full bg-[#e31e36] transition-all duration-300" style={{ width: (step * 10) + '%' }} /></div>
-        <section className="flex flex-1 flex-col px-6 pb-6 pt-8">
-          {step <= 3 && <div className="flex flex-1 flex-col items-center justify-center text-center">
-            <div className="mb-8 grid h-44 w-44 place-items-center rounded-full bg-gradient-to-br from-[#fff0f2] to-[#f9cbd2]">
-              {appData.appSettings.appLogo ? <img src={appData.appSettings.appLogo} alt="FinoPay" className="h-24 w-24 object-contain" /> : <ShieldCheck className="h-24 w-24 text-[#e31e36]" strokeWidth={1.3} />}
+    <main className="fino-superlogout fixed inset-0 flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-black">
+      <div className="fino-superlogout-frame relative h-[100dvh] w-full overflow-hidden bg-white">
+        {step === 0 ? (
+          <>
+            <img src={splash} alt="FinoPay splash screen" draggable={false} className="fino-splash-background absolute inset-0 h-full w-full select-none object-fill" />
+            <img src={wordmark} alt="FinoPay" draggable={false} className="fino-splash-wordmark pointer-events-none absolute select-none object-contain" />
+          </>
+        ) : (
+          <>
+            <img src={screens[step - 1]} alt={'FinoPay onboarding screen ' + step} draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
+            {(step === 4 || step === 10) && <img src={wordmark} alt="FinoPay" draggable={false} className={'pointer-events-none absolute select-none object-contain ' + (step === 4 ? 'fino-screen4-wordmark' : 'fino-screen10-wordmark')} />}
+          </>
+        )}
+
+        {step >= 1 && step <= 3 && (
+          <>
+            <button aria-label="Skip onboarding" onClick={() => setStep(4)} className="absolute left-[5%] top-[89%] z-10 h-[8%] w-[27%] bg-transparent" />
+            <button aria-label="Next onboarding screen" onClick={() => setStep(step + 1)} className="absolute right-[4%] top-[89%] z-10 h-[8%] w-[25%] bg-transparent" />
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <button aria-label="Existing customer login" onClick={() => setStep(5)} className="absolute left-[6%] top-[35.5%] z-10 h-[13.5%] w-[88%] bg-transparent" />
+            <button aria-label="New customer registration" onClick={() => toast({ title: 'New registration', description: 'New account registration is separate from this existing-customer Super Logout flow.' })} className="absolute left-[6%] top-[50.5%] z-10 h-[13.5%] w-[88%] bg-transparent" />
+          </>
+        )}
+
+        {step === 5 && <button aria-label="Send verification SMS" onClick={sendSms} className="absolute bottom-[5.5%] left-[5%] z-10 h-[8%] w-[90%] bg-transparent" />}
+
+        {step === 7 && (
+          <>
+            <button aria-label="Back to SMS verification" onClick={() => setStep(5)} className="absolute left-[5%] top-[7%] z-10 h-[7%] w-[20%] bg-transparent" />
+            <div className="absolute left-[9%] top-[33.1%] z-10 flex h-[3.5%] w-[82%] items-center justify-center bg-white px-1 text-center text-[clamp(10px,3.4vw,15px)] font-normal text-[#454545]">
+              Enter the OTP sent to {mobileText}
             </div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#e31e36]">FinoPay</p>
-            <h1 className="max-w-xs text-2xl font-bold leading-snug">{introTitles[step - 1]}</h1>
-            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">{step === 1 ? 'A simpler way to manage your banking, securely and conveniently.' : step === 2 ? 'Access your account details and everyday banking services in one place.' : 'Your security matters. Follow the steps to verify your saved details and sign in again.'}</p>
-            <div className="mt-8 flex items-center gap-2">{[1, 2, 3].map(item => <span key={item} className={'h-2 rounded-full ' + (item === step ? 'w-7 bg-[#e31e36]' : 'w-2 bg-slate-200')} />)}</div>
-            <div className="mt-auto grid w-full grid-cols-2 gap-3 pt-10">
-              <Button variant="outline" className="h-12 rounded-xl" onClick={() => setStep(4)}>Skip</Button>
-              <Button className="h-12 rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={() => setStep(step + 1)}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            <div className="absolute left-[16.4%] top-[38.1%] z-10 flex h-[7.8%] w-[67.2%] gap-[3.2%]">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={element => { inputRefs.current[index] = element; }}
+                  aria-label={'OTP digit ' + (index + 1)}
+                  value={digit}
+                  onChange={event => changeOtp(index, event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Backspace' && !otp[index] && index > 0) inputRefs.current[index - 1]?.focus();
+                    if (event.key === 'Enter') verifyOtp();
+                  }}
+                  onPaste={event => {
+                    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4).split('');
+                    if (pasted.length) {
+                      event.preventDefault();
+                      setOtp([pasted[0] || '', pasted[1] || '', pasted[2] || '', pasted[3] || '']);
+                      inputRefs.current[Math.min(pasted.length - 1, 3)]?.focus();
+                    }
+                  }}
+                  inputMode="numeric"
+                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                  maxLength={1}
+                  className="h-full min-w-0 flex-1 rounded-[12px] border border-[#d8ccff] bg-white/90 text-center text-[clamp(17px,5.4vw,25px)] font-semibold text-[#4540a3] outline-none focus:border-[#5549c4]"
+                />
+              ))}
             </div>
-          </div>}
-
-          {step === 4 && <div className="flex flex-1 flex-col">
-            <div className="mb-8 mt-8 text-center"><h1 className="text-2xl font-bold">Welcome to FinoPay</h1><p className="mt-2 text-sm text-slate-500">Choose how you would like to continue.</p></div>
-            <div className="space-y-4">
-              <button onClick={() => setStep(5)} className="flex w-full items-center gap-4 rounded-2xl border border-[#e31e36]/30 p-5 text-left hover:bg-rose-50"><span className="grid h-12 w-12 place-items-center rounded-xl bg-rose-50 text-[#e31e36]"><Smartphone /></span><span className="flex-1"><span className="block font-semibold">Existing User Login</span><span className="mt-1 block text-sm text-slate-500">Verify your registered mobile number</span></span><ChevronRight /></button>
-              <button onClick={() => { window.sessionStorage.removeItem('finoPaySuperLogoutPending'); router.replace('/login-1'); }} className="flex w-full items-center gap-4 rounded-2xl border p-5 text-left hover:bg-slate-50"><span className="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-slate-600"><ArrowRight /></span><span className="flex-1"><span className="block font-semibold">New Registration</span><span className="mt-1 block text-sm text-slate-500">Continue to the app login page</span></span><ChevronRight /></button>
+            <div className="absolute left-[20.5%] top-[48.5%] z-10 flex h-[3.5%] w-[31%] items-center bg-white text-[clamp(11px,3vw,14px)] text-[#999999]">
+              {seconds} sec
             </div>
-            <p className="mt-auto pt-8 text-center text-xs text-slate-400">Your saved profile and account information will be retained.</p>
-          </div>}
+            {seconds <= 0 && <button aria-label="Resend OTP" onClick={resendOtp} className="absolute left-[18%] top-[52.5%] z-10 h-[4%] w-[35%] bg-transparent" />}
+            <button aria-label="Verify OTP" onClick={verifyOtp} disabled={otp.join('').length !== 4 || seconds <= 0} className="absolute bottom-[5.5%] left-[7%] z-10 h-[8%] w-[86%] bg-transparent disabled:cursor-not-allowed" />
+            {notificationVisible && (
+              <div className="fino-otp-push absolute left-[2%] top-[2%] z-30 flex w-[96%] items-center gap-3 rounded-[22px] bg-[#171719] px-4 py-3 text-white shadow-2xl">
+                {settings.messageAvatar ? <img src={settings.messageAvatar} alt="Saved OTP avatar" className="h-11 w-11 shrink-0 rounded-full border border-white/20 object-cover" /> : <UserAvatar user={appData.user} className="h-11 w-11" />}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2"><p className="text-[13px] font-bold">VM-FINOBK</p><span className="text-[11px] text-white/60">now</span></div>
+                  <p className="mt-0.5 text-[12px] leading-[1.35] text-white/90">Dear Customer, Your OTP is {generatedOtp} and is valid for only 90 sec. Do not share it with anyone.</p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
-          {step === 5 && <div className="flex flex-1 flex-col">
-            <button onClick={() => setStep(4)} className="mb-8 flex w-fit items-center gap-2 text-sm text-slate-500"><ArrowLeft className="h-4 w-4" /> Back</button>
-            <div className="mb-7 grid h-16 w-16 place-items-center rounded-2xl bg-rose-50 text-[#e31e36]"><MessageSquareText className="h-8 w-8" /></div>
-            <h1 className="text-2xl font-bold">Verify your mobile number</h1><p className="mt-3 text-sm leading-6 text-slate-500">We will send a verification SMS to the mobile number registered in your FinoPay settings.</p>
-            <div className="mt-6 rounded-xl border bg-slate-50 p-4"><p className="text-xs text-slate-500">Registered mobile number</p><p className="mt-1 font-semibold">{maskedPhone}</p></div>
-            <Button disabled={sending} className="mt-6 h-12 rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={sendSms}>{sending ? <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Sending SMS…</> : 'Send SMS'}</Button>
-            <p className="mt-3 text-center text-xs text-slate-400">Please keep this screen open while we process your request.</p>
-          </div>}
+        {step === 9 && <button aria-label="Continue after successful registration" onClick={() => setStep(10)} className="absolute bottom-[5.5%] left-[8%] z-10 h-[8%] w-[84%] bg-transparent" />}
 
-          {step === 6 && <div className="flex flex-1 flex-col items-center justify-center text-center">
-            <div className="grid h-24 w-24 place-items-center rounded-full bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-14 w-14" /></div>
-            <h1 className="mt-7 text-2xl font-bold">SMS request submitted</h1><p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">Continue to the mobile verification step for {maskedPhone}.</p>
-            <Button className="mt-8 h-12 w-full rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={() => { setSeconds(90); setStep(7); }}>Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
-          </div>}
-
-          {step === 7 && <div className="flex flex-1 flex-col">
-            <div className="mb-6 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-rose-50 text-[#e31e36]"><Smartphone className="h-8 w-8" /></div><h1 className="mt-4 text-2xl font-bold">Verify your mobile number</h1><p className="mt-2 text-sm text-slate-500">Enter the verification code sent to {maskedPhone}.</p></div>
-            <div className="mb-5 flex items-center justify-center gap-2 rounded-xl bg-slate-50 p-3 text-sm"><Clock3 className="h-4 w-4 text-[#e31e36]" /><span>Time remaining</span><strong className="tabular-nums text-[#e31e36]">{String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</strong></div>
-            <label className="mb-2 text-sm font-medium" htmlFor="superlogout-otp">Verification code</label>
-            <input id="superlogout-otp" value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Enter OTP" className="h-12 rounded-xl border px-4 text-center text-xl tracking-[0.45em] outline-none focus:border-[#e31e36]" />
-            <div className="fino-otp-notification relative mt-6 overflow-hidden rounded-2xl border bg-white p-4 shadow-lg"><div className="absolute inset-x-0 top-0 h-1 bg-[#e31e36] animate-pulse" /><div className="flex items-start gap-3">{appData.appSettings.messageAvatar ? <img src={appData.appSettings.messageAvatar} alt="Saved OTP avatar" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <UserAvatar user={appData.user} />}<div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold">FinoPay</p><span className="text-[10px] text-slate-400">now</span></div><p className="mt-1 text-xs leading-5 text-slate-600">Your FinoPay verification request is in progress. Use the OTP from the app's existing verification flow if one has been issued.</p>{otp.length === 6 && <p className="mt-2 text-sm font-semibold tracking-widest">Code entered: {otp.replace(/./g, '•')}</p>}</div></div></div>
-            <p className="mt-4 text-center text-xs text-slate-400">This notification is a visual preview; this screen does not generate or send an SMS OTP.</p>
-            <Button className="mt-auto h-12 rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={() => setStep(8)}>Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            {seconds === 0 && <p className="mt-2 text-center text-xs text-rose-600">The 90-second timer has expired. Continue to proceed.</p>}
-          </div>}
-
-          {step === 8 && <div className="flex flex-1 flex-col items-center justify-center text-center"><div className="relative grid h-28 w-28 place-items-center rounded-full bg-rose-50"><LoaderCircle className="h-14 w-14 animate-spin text-[#e31e36]" /></div><h1 className="mt-8 text-2xl font-bold">Verifying your details</h1><p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">Please wait while we prepare your account information.</p><div className="mt-8 flex items-center gap-2 text-xs text-slate-400"><ShieldCheck className="h-4 w-4" /> Keep the app open</div>{loadingProgress && <p className="mt-4 text-xs text-slate-400">Please do not close this screen…</p>}</div>}
-
-          {step === 9 && <div className="flex flex-1 flex-col items-center justify-center text-center"><div className="grid h-24 w-24 place-items-center rounded-full bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-14 w-14" /></div><p className="mt-7 text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">Verification complete</p><h1 className="mt-2 text-2xl font-bold">Congratulations!</h1><p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">Your saved FinoPay details are ready. Review the information to continue.</p><Button className="mt-8 h-12 w-full rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={() => setStep(10)}>View details <ArrowRight className="ml-2 h-4 w-4" /></Button></div>}
-
-          {step === 10 && <div className="flex flex-1 flex-col">
-            <div className="mb-6 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-9 w-9" /></div><h1 className="mt-4 text-2xl font-bold">Your details are confirmed</h1><p className="mt-2 text-sm text-slate-500">These details are taken from your saved FinoPay settings.</p></div>
-            <div className="space-y-0 overflow-hidden rounded-2xl border"><div className="flex items-center gap-3 border-b p-4"><UserAvatar user={appData.user} /><div><p className="text-xs text-slate-500">Account holder</p><p className="font-semibold">{appData.user.name || 'Name not saved'}</p></div></div>
-              {[['Customer ID', appData.user.customerId || 'Not saved'], ['Registered mobile', phone], ['Account number', account?.accountNumber || 'Not saved'], ['Account type', account?.type || 'Not saved'], ['Branch', account?.branchName || 'Not saved'], ['IFSC', account?.ifsc || 'Not saved']].map(([label, value]) => <div key={label} className="flex items-start justify-between gap-4 border-b p-4 last:border-0"><span className="text-sm text-slate-500">{label}</span><span className="max-w-[58%] break-words text-right text-sm font-medium">{value}</span></div>)}
-            </div>
-            <p className="mt-4 text-xs leading-5 text-slate-400">Continue to the existing MPIN login screen. Your saved app data will not be cleared.</p>
-            <Button className="mt-auto h-12 rounded-xl bg-[#e31e36] hover:bg-[#c91930]" onClick={finish}>Proceed to MPIN Login <ArrowRight className="ml-2 h-4 w-4" /></Button>
-          </div>}
-        </section>
-        <footer className="border-t px-5 py-4 text-center text-[11px] text-slate-400">FinoPay · Secure digital banking</footer>
+        {step === 10 && (
+          <>
+            <section className="fino-details-card absolute left-[4.5%] top-[31%] z-10 h-[23.5%] w-[91%] rounded-[24px] px-[4.3%] text-white">
+              <h1 className="absolute left-0 right-0 top-[12%] text-center text-[clamp(15px,4vw,18px)] font-bold">{appData.user.name || 'Account holder'}</h1>
+              <div className="absolute left-[4.5%] right-[4.5%] top-[35%] flex items-center justify-between gap-2 text-[clamp(11px,3.1vw,14px)]">
+                <span className="text-[#c2b5df]">Customer ID</span><strong className="text-right">{maskCustomerId(appData.user.customerId)}</strong>
+              </div>
+              <div className="absolute left-[4.5%] right-[4.5%] top-[55%] flex items-center justify-between gap-2 text-[clamp(10px,3vw,14px)]">
+                <span className="text-[#c2b5df]">Email</span><strong className="max-w-[62%] break-all text-right">{maskEmail(appData.user.contact.email)}</strong>
+              </div>
+              <div className="absolute left-[4.5%] right-[4.5%] top-[77%] flex items-center justify-between gap-2 text-[clamp(11px,3.1vw,14px)]">
+                <span className="text-[#c2b5df]">Phone</span><strong className="text-right">{maskMobile(phone)}</strong>
+              </div>
+              <div className="absolute left-[4.5%] right-[4.5%] top-[48%] h-px bg-white/50" />
+              <div className="absolute left-[4.5%] right-[4.5%] top-[69%] h-px bg-white/50" />
+              <span className="sr-only">Account: {account?.accountNumber || 'Not saved'}, {account?.type || 'Not saved'}, {account?.branchName || 'Not saved'}</span>
+            </section>
+            <button aria-label="Proceed to MPIN login" onClick={finish} className="absolute bottom-[5.5%] left-[8%] z-20 h-[8%] w-[84%] bg-transparent" />
+          </>
+        )}
       </div>
-      <style jsx global>{`@keyframes finoOtpSlide { 0% { transform: translateY(-115%); opacity: 0; } 15% { transform: translateY(0); opacity: 1; } 75% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(115%); opacity: 0; } } .fino-otp-notification { animation: finoOtpSlide 4.5s ease-in-out infinite; }`}</style>
     </main>
   );
 }

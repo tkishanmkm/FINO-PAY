@@ -262,7 +262,10 @@ export default function SettingsPage() {
         const visualKeys: (keyof AppData['appSettings'])[] = [
             'loginBanner', 'getStatementBanner', 'dashboardBanner', 'appLogo', 'appLogo2',
             'messageAvatar', 'qrCodeImage', 'personalLoanBanner', 'twoWheelerLoanBanner',
-            'statementHeaderBanner', 'statementMiddleBanner',
+            'statementHeaderBanner', 'statementMiddleBanner', 'superLogoutSplash', 'superLogoutWordmark',
+            'superLogoutScreen1', 'superLogoutScreen2', 'superLogoutScreen3', 'superLogoutScreen4',
+            'superLogoutScreen5', 'superLogoutScreen6', 'superLogoutScreen7', 'superLogoutScreen8',
+            'superLogoutScreen9', 'superLogoutScreen10',
         ];
         for (const key of visualKeys) {
             const value = snapshot.appSettings[key];
@@ -525,6 +528,21 @@ export default function SettingsPage() {
               <FileUpload label="Two Wheeler Loan Banner" accept="image/*" currentImage={localData.appSettings.twoWheelerLoanBanner} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, twoWheelerLoanBanner: uri}}))} />
               <FileUpload label="Statement Header Banner" accept="image/*" currentImage={localData.appSettings.statementHeaderBanner} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, statementHeaderBanner: uri}}))} />
               <FileUpload label="Statement Middle Banner" accept="image/*" currentImage={localData.appSettings.statementMiddleBanner} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, statementMiddleBanner: uri}}))} />
+          </SettingsSection>
+
+          <SettingsSection title="Super Logout Reference Images" description="These reference images control the Super Logout splash and all ten onboarding and verification screens. Uploaded images are included in JSON exports.">
+              <FileUpload label="Super Logout Splash Background" accept="image/*" currentImage={localData.appSettings.superLogoutSplash} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutSplash: uri}}))} />
+              <FileUpload label="FinoPay Wordmark (Splash and Screens)" accept="image/*" currentImage={localData.appSettings.superLogoutWordmark} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutWordmark: uri}}))} />
+              <FileUpload label="Reference Screen 1" accept="image/*" currentImage={localData.appSettings.superLogoutScreen1} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen1: uri}}))} />
+              <FileUpload label="Reference Screen 2" accept="image/*" currentImage={localData.appSettings.superLogoutScreen2} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen2: uri}}))} />
+              <FileUpload label="Reference Screen 3" accept="image/*" currentImage={localData.appSettings.superLogoutScreen3} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen3: uri}}))} />
+              <FileUpload label="Reference Screen 4" accept="image/*" currentImage={localData.appSettings.superLogoutScreen4} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen4: uri}}))} />
+              <FileUpload label="Reference Screen 5" accept="image/*" currentImage={localData.appSettings.superLogoutScreen5} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen5: uri}}))} />
+              <FileUpload label="Reference Screen 6" accept="image/*" currentImage={localData.appSettings.superLogoutScreen6} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen6: uri}}))} />
+              <FileUpload label="Reference Screen 7" accept="image/*" currentImage={localData.appSettings.superLogoutScreen7} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen7: uri}}))} />
+              <FileUpload label="Reference Screen 8" accept="image/*" currentImage={localData.appSettings.superLogoutScreen8} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen8: uri}}))} />
+              <FileUpload label="Reference Screen 9" accept="image/*" currentImage={localData.appSettings.superLogoutScreen9} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen9: uri}}))} />
+              <FileUpload label="Reference Screen 10" accept="image/*" currentImage={localData.appSettings.superLogoutScreen10} onFileSelect={uri => setLocalData(p => ({...p, appSettings: {...p.appSettings, superLogoutScreen10: uri}}))} />
           </SettingsSection>
           
           <SettingsSection title="Account Details" description="Manage account numbers and balances.">

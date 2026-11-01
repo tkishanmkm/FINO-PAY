@@ -73,6 +73,18 @@ export interface AppSettings {
   twoWheelerLoanBanner?: string;
   statementHeaderBanner?: string;
   statementMiddleBanner?: string;
+  superLogoutSplash?: string;
+  superLogoutWordmark?: string;
+  superLogoutScreen1?: string;
+  superLogoutScreen2?: string;
+  superLogoutScreen3?: string;
+  superLogoutScreen4?: string;
+  superLogoutScreen5?: string;
+  superLogoutScreen6?: string;
+  superLogoutScreen7?: string;
+  superLogoutScreen8?: string;
+  superLogoutScreen9?: string;
+  superLogoutScreen10?: string;
   transactionLimits?: {
     [key: string]: number;
   };
