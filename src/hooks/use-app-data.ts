@@ -1,13 +1,12 @@
-
 'use client';
 
 import { createContext, useContext } from 'react';
 import type { AppData } from '@/lib/types';
-import { getAppData } from '@/lib/storage';
+import { initialData } from '@/lib/constants';
 
 export interface AppDataContextType {
   appData: AppData;
-  setAppData: (data: AppData) => void;
+  setAppData: (data: AppData) => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -16,13 +15,10 @@ export const AppDataContext = createContext<AppDataContextType | undefined>(unde
 export function useAppData() {
   const context = useContext(AppDataContext);
   if (context === undefined) {
-    // This can happen on the very first render of a page that uses it,
-    // before the main AppBody has had a chance to render its provider.
-    // We can return a loading state or a default structure.
     return {
-      appData: getAppData(), // Return initial/stored data synchronously
-      setAppData: () => {}, // No-op setter
-      isLoading: true, // Indicate that the "real" context is not yet available
+      appData: initialData,
+      setAppData: async () => false,
+      isLoading: true,
     };
   }
   return context;

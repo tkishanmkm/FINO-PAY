@@ -1,12 +1,11 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import SplashScreen from '@/components/SplashScreen';
 import { AppDataContext } from '@/hooks/use-app-data';
 import type { AppData } from '@/lib/types';
-import { getAppData, saveAppData } from '@/lib/storage';
+import { loadAppData, saveAppData } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import { isSuperLogoutPending } from '@/lib/super-logout-state';
 
@@ -18,33 +17,41 @@ export default function AppBody({
   const [data, setData] = useState<AppData | null>(null);
   const [appState, setAppState] = useState<'loading' | 'splashing' | 'ready'>('loading');
   const [hasShownStartupSplash, setHasShownStartupSplash] = useState(false);
+  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
+  const saveSequence = useRef(0);
   const pathname = usePathname();
   const router = useRouter();
-  const { isLoading: isAuthLoading, logout } = useAuth(); // Use a different name to avoid conflict
+  const { isLoading: isAuthLoading, logout } = useAuth();
+
+  // Load once per page lifetime. Do not reload on route changes: doing so could
+  // replace newer in-memory edits while an IndexedDB write is still completing.
+  useEffect(() => {
+    let active = true;
+    void loadAppData().then((appData) => {
+      if (active) setData(appData);
+    }).catch((error) => {
+      console.error('FinoPay failed to load saved data.', error);
+      if (active) setSaveState('error');
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
-    const appData = getAppData();
-    setData(appData);
-
     const handleLogoutLegacy = () => {
-        logout();
-        window.location.href = '/login-1';
+      logout();
+      window.location.href = '/login-1';
     };
-    
-    // Attach to window for access from MorePage
     (window as any).handleLogoutLegacy = handleLogoutLegacy;
+    return () => { delete (window as any).handleLogoutLegacy; };
+  }, [logout]);
 
-    // Conditionally show splash screen based on path
+  useEffect(() => {
     if (!hasShownStartupSplash || pathname === '/super-logout') {
       setAppState('splashing');
     } else {
       setAppState('ready');
     }
-    
-    return () => {
-        delete (window as any).handleLogoutLegacy;
-    }
-  }, [pathname, logout]);
+  }, [pathname, hasShownStartupSplash]);
 
   useEffect(() => {
     let active = true;
@@ -63,9 +70,24 @@ export default function AppBody({
     return () => { active = false; };
   }, [pathname, router]);
 
-  const handleSetAppData = useCallback((newData: AppData) => {
+  const handleSetAppData = useCallback(async (newData: AppData): Promise<boolean> => {
     setData(newData);
-    saveAppData(newData);
+    const sequence = ++saveSequence.current;
+    setSaveState('saving');
+    try {
+      const storage = await saveAppData(newData);
+      if (sequence === saveSequence.current) {
+        setSaveState('saved');
+        if (storage === 'localStorage') {
+          console.warn('FinoPay changes were saved using the browser fallback store.');
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('FinoPay changes were not saved.', error);
+      if (sequence === saveSequence.current) setSaveState('error');
+      return false;
+    }
   }, []);
 
   const handleSplashFinished = useCallback(() => {
@@ -74,9 +96,9 @@ export default function AppBody({
   }, []);
 
   if (appState === 'loading' || !data || isAuthLoading) {
-    return null; // Render nothing while loading initial data or auth state
+    return null;
   }
-  
+
   if (appState === 'splashing') {
     return (
       <SplashScreen
@@ -89,6 +111,17 @@ export default function AppBody({
   return (
     <AppDataContext.Provider value={{ appData: data, setAppData: handleSetAppData, isLoading: false }}>
       {children}
+      <div
+        role="status"
+        aria-live="polite"
+        className={`fixed bottom-3 right-3 z-[100] rounded-full px-3 py-1.5 text-xs shadow-md pointer-events-none ${
+          saveState === 'error'
+            ? 'bg-destructive text-destructive-foreground'
+            : 'bg-background/90 text-muted-foreground border'
+        }`}
+      >
+        {saveState === 'saving' ? 'Saving changes…' : saveState === 'error' ? 'Save failed — changes are not safely stored' : 'All changes saved'}
+      </div>
     </AppDataContext.Provider>
   );
 }
