@@ -6,7 +6,7 @@ import { initialData } from '@/lib/constants';
 
 export interface AppDataContextType {
   appData: AppData;
-  setAppData: (data: AppData) => void;
+  setAppData: (data: AppData) => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -15,11 +15,9 @@ export const AppDataContext = createContext<AppDataContextType | undefined>(unde
 export function useAppData() {
   const context = useContext(AppDataContext);
   if (context === undefined) {
-    // The application provider loads IndexedDB asynchronously. Avoid reading or
-    // writing browser storage during a render that is outside that provider.
     return {
       appData: initialData,
-      setAppData: () => {},
+      setAppData: async () => false,
       isLoading: true,
     };
   }
