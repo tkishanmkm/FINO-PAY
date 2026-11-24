@@ -17,7 +17,7 @@ export default function AppBody({
   const [data, setData] = useState<AppData | null>(null);
   const [appState, setAppState] = useState<'loading' | 'splashing' | 'ready'>('loading');
   const [hasShownStartupSplash, setHasShownStartupSplash] = useState(false);
-  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [saveState, setSaveState] = useState<'idle' | 'saved' | 'saving' | 'error'>('idle');
   const saveSequence = useRef(0);
   const pathname = usePathname();
   const router = useRouter();
@@ -35,6 +35,13 @@ export default function AppBody({
     });
     return () => { active = false; };
   }, []);
+
+  // Save feedback is a temporary notification, never a permanent app banner.
+  useEffect(() => {
+    if (saveState === 'idle' || saveState === 'saving') return;
+    const timeout = window.setTimeout(() => setSaveState('idle'), saveState === 'error' ? 5000 : 2000);
+    return () => window.clearTimeout(timeout);
+  }, [saveState]);
 
   useEffect(() => {
     const handleLogoutLegacy = () => {
@@ -111,17 +118,19 @@ export default function AppBody({
   return (
     <AppDataContext.Provider value={{ appData: data, setAppData: handleSetAppData, isLoading: false }}>
       {children}
-      <div
-        role="status"
-        aria-live="polite"
-        className={`fixed bottom-3 right-3 z-[100] rounded-full px-3 py-1.5 text-xs shadow-md pointer-events-none ${
-          saveState === 'error'
-            ? 'bg-destructive text-destructive-foreground'
-            : 'bg-background/90 text-muted-foreground border'
-        }`}
-      >
-        {saveState === 'saving' ? 'Saving changes…' : saveState === 'error' ? 'Save failed — changes are not safely stored' : 'All changes saved'}
-      </div>
+      {saveState !== 'idle' && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-3 right-3 z-[100] rounded-full px-3 py-1.5 text-xs shadow-md pointer-events-none ${
+            saveState === 'error'
+              ? 'bg-destructive text-destructive-foreground'
+              : 'bg-background/90 text-muted-foreground border'
+          }`}
+        >
+          {saveState === 'saving' ? 'Saving changes…' : saveState === 'error' ? 'Save failed — changes are not safely stored' : 'All changes saved'}
+        </div>
+      )}
     </AppDataContext.Provider>
   );
 }
