@@ -132,8 +132,10 @@ async function writeIndexedDb(data: AppData): Promise<void> {
 }
 
 export async function resetAppData(): Promise<void> {
-  // Write defaults into the primary store before removing the legacy copy.
-  await writeIndexedDb(initialData);
+  // Queue reset after any in-flight save so an older edit cannot overwrite defaults.
+  const reset = saveQueue.catch(() => undefined).then(() => writeIndexedDb(initialData));
+  saveQueue = reset;
+  await reset;
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
@@ -154,10 +156,11 @@ export function saveAppData(data: AppData): Promise<'indexeddb' | 'localStorage'
         console.warn('FinoPay saved using localStorage fallback; IndexedDB was unavailable.', indexedDbError);
         return 'localStorage' as const;
       } catch (fallbackError) {
-        throw new Error(
-          'FinoPay could not save your changes. Browser storage may be full or disabled. Your current screen still has the edits, but they may not survive a reload.',
-          { cause: fallbackError }
+        const saveError = new Error(
+          'FinoPay could not save your changes. Browser storage may be full or disabled. Your current screen still has the edits, but they may not survive a reload.'
         );
+        (saveError as Error & { cause?: unknown }).cause = fallbackError;
+        throw saveError;
       }
     }
   });
