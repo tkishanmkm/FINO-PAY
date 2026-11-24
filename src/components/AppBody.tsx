@@ -70,21 +70,24 @@ export default function AppBody({
     return () => { active = false; };
   }, [pathname, router]);
 
-  const handleSetAppData = useCallback((newData: AppData) => {
+  const handleSetAppData = useCallback(async (newData: AppData): Promise<boolean> => {
     setData(newData);
     const sequence = ++saveSequence.current;
     setSaveState('saving');
-    void saveAppData(newData).then((storage) => {
+    try {
+      const storage = await saveAppData(newData);
       if (sequence === saveSequence.current) {
         setSaveState('saved');
         if (storage === 'localStorage') {
           console.warn('FinoPay changes were saved using the browser fallback store.');
         }
       }
-    }).catch((error) => {
+      return true;
+    } catch (error) {
       console.error('FinoPay changes were not saved.', error);
       if (sequence === saveSequence.current) setSaveState('error');
-    });
+      return false;
+    }
   }, []);
 
   const handleSplashFinished = useCallback(() => {
