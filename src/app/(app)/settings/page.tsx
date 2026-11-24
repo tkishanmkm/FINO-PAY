@@ -39,6 +39,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import UserAvatar from '@/components/UserAvatar';
 import { setSuperLogoutPending } from '@/lib/super-logout-state';
+import { resetAppData } from '@/lib/storage';
 
 function formatSuperLogoutMessageDate(timestamp: string): string {
     const date = new Date(timestamp);
@@ -120,9 +121,11 @@ export default function SettingsPage() {
     const [isExportLinkDialogOpen, setIsExportLinkDialogOpen] = useState(false);
     const [isJsonViewerOpen, setIsJsonViewerOpen] = useState(false);
 
-    const handleSave = () => {
-        setAppData(localData);
-        toast({ title: "Settings Saved", description: "Your changes have been applied." });
+    const handleSave = async () => {
+        const saved = await setAppData(localData);
+        toast(saved
+            ? { title: "Settings Saved", description: "Your changes are safely stored on this device." }
+            : { variant: 'destructive', title: "Save Failed", description: "Your changes could not be stored. Keep this page open and try again." });
     };
 
     const handleFieldChange = (section: keyof AppData, field: any, value: any) => {
@@ -224,26 +227,31 @@ export default function SettingsPage() {
         setLocalData(prev => ({...prev, chatMessages: prev.chatMessages.filter(m => m.id !== id)}));
     }
 
-    const updateTokenMessageHistory = (messages: NonNullable<AppData['appSettings']['superLogoutTokenMessages']>) => {
+    const updateTokenMessageHistory = async (messages: NonNullable<AppData['appSettings']['superLogoutTokenMessages']>) => {
+        const nextData = {
+            ...appData,
+            appSettings: { ...appData.appSettings, superLogoutTokenMessages: messages },
+        };
         setLocalData(prev => ({
             ...prev,
             appSettings: { ...prev.appSettings, superLogoutTokenMessages: messages },
         }));
-        setAppData({
-            ...appData,
-            appSettings: { ...appData.appSettings, superLogoutTokenMessages: messages },
-        });
+        return setAppData(nextData);
     };
 
-    const removeTokenMessage = (id: string) => {
+    const removeTokenMessage = async (id: string) => {
         const messages = (localData.appSettings.superLogoutTokenMessages || []).filter(message => message.id !== id);
-        updateTokenMessageHistory(messages);
-        toast({ title: 'Token message deleted', description: 'The selected saved token message has been removed.' });
+        const saved = await updateTokenMessageHistory(messages);
+        toast(saved
+            ? { title: 'Token message deleted', description: 'The selected saved token message has been removed.' }
+            : { variant: 'destructive', title: 'Delete failed', description: 'The token history could not be saved.' });
     };
 
-    const removeAllTokenMessages = () => {
-        updateTokenMessageHistory([]);
-        toast({ title: 'Token history cleared', description: 'All saved Super Logout token messages have been deleted.' });
+    const removeAllTokenMessages = async () => {
+        const saved = await updateTokenMessageHistory([]);
+        toast(saved
+            ? { title: 'Token history cleared', description: 'All saved Super Logout token messages have been deleted.' }
+            : { variant: 'destructive', title: 'Clear failed', description: 'The token history could not be saved.' });
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,10 +382,14 @@ export default function SettingsPage() {
         toast({ title: 'Link Copied', description: 'The export link has been copied to your clipboard.' });
     };
 
-    const handleReset = () => {
-        const STORAGE_KEY = 'finoPayAppData';
-        localStorage.removeItem(STORAGE_KEY);
-        window.location.reload();
+    const handleReset = async () => {
+        try {
+            await resetAppData();
+            window.location.reload();
+        } catch (error) {
+            console.error('FinoPay reset failed.', error);
+            toast({ variant: 'destructive', title: 'Reset failed', description: 'The app data could not be reset. Your existing saved data has been kept.' });
+        }
     };
 
     const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -403,11 +415,15 @@ export default function SettingsPage() {
         }
     };
 
-    const applyParsedStatement = (mode: 'replace-app' | 'replace-transactions' | 'save-transactions') => {
+    const applyParsedStatement = async (mode: 'replace-app' | 'replace-transactions' | 'save-transactions') => {
         if (!parsedStatement) return;
         const nextData = applyStatementToAppData(appData, parsedStatement, mode);
         setLocalData(nextData);
-        setAppData(nextData);
+        const saved = await setAppData(nextData);
+        if (!saved) {
+            toast({ variant: 'destructive', title: 'Statement save failed', description: 'The imported rows could not be stored. Keep this page open and retry.' });
+            return;
+        }
         const message = mode === 'replace-app' ? 'Profile, main account details, balance, and transactions replaced. App visuals and other collections were preserved.'
             : mode === 'replace-transactions' ? 'Existing transactions replaced; profile and account details were left unchanged.'
             : 'New statement transactions saved alongside existing transactions; duplicates were skipped.';
@@ -430,7 +446,7 @@ export default function SettingsPage() {
             <Button onClick={handleSave} size="lg">Save All Changes</Button>
           </div>
           <p className="text-muted-foreground text-sm">
-            Use this page to manage the mock data for the prototype in real-time. Changes are saved to your browser's local storage.
+            Use this page to manage the mock data for the prototype in real-time. Changes are saved to this device's IndexedDB storage, with a legacy browser-storage fallback.
           </p>
           
           <SettingsSection title="Data Management" description="Save, load, or reset the entire app state.">
