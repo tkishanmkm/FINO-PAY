@@ -1,9 +1,8 @@
-
 'use client';
 
 import { createContext, useContext } from 'react';
 import type { AppData } from '@/lib/types';
-import { getAppData } from '@/lib/storage';
+import { initialData } from '@/lib/constants';
 
 export interface AppDataContextType {
   appData: AppData;
@@ -16,13 +15,12 @@ export const AppDataContext = createContext<AppDataContextType | undefined>(unde
 export function useAppData() {
   const context = useContext(AppDataContext);
   if (context === undefined) {
-    // This can happen on the very first render of a page that uses it,
-    // before the main AppBody has had a chance to render its provider.
-    // We can return a loading state or a default structure.
+    // The application provider loads IndexedDB asynchronously. Avoid reading or
+    // writing browser storage during a render that is outside that provider.
     return {
-      appData: getAppData(), // Return initial/stored data synchronously
-      setAppData: () => {}, // No-op setter
-      isLoading: true, // Indicate that the "real" context is not yet available
+      appData: initialData,
+      setAppData: () => {},
+      isLoading: true,
     };
   }
   return context;
