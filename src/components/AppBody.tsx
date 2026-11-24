@@ -23,6 +23,8 @@ export default function AppBody({
   const router = useRouter();
   const { isLoading: isAuthLoading, logout } = useAuth();
 
+  // Load once per page lifetime. Do not reload on route changes: doing so could
+  // replace newer in-memory edits while an IndexedDB write is still completing.
   useEffect(() => {
     let active = true;
     void loadAppData().then((appData) => {
@@ -31,24 +33,25 @@ export default function AppBody({
       console.error('FinoPay failed to load saved data.', error);
       if (active) setSaveState('error');
     });
+    return () => { active = false; };
+  }, []);
 
+  useEffect(() => {
     const handleLogoutLegacy = () => {
       logout();
       window.location.href = '/login-1';
     };
     (window as any).handleLogoutLegacy = handleLogoutLegacy;
+    return () => { delete (window as any).handleLogoutLegacy; };
+  }, [logout]);
 
+  useEffect(() => {
     if (!hasShownStartupSplash || pathname === '/super-logout') {
       setAppState('splashing');
     } else {
       setAppState('ready');
     }
-
-    return () => {
-      active = false;
-      delete (window as any).handleLogoutLegacy;
-    };
-  }, [pathname, logout, hasShownStartupSplash]);
+  }, [pathname, hasShownStartupSplash]);
 
   useEffect(() => {
     let active = true;
