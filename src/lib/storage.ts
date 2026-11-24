@@ -131,6 +131,16 @@ async function writeIndexedDb(data: AppData): Promise<void> {
   });
 }
 
+export async function resetAppData(): Promise<void> {
+  // Write defaults into the primary store before removing the legacy copy.
+  await writeIndexedDb(initialData);
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn('FinoPay reset completed in IndexedDB, but the legacy fallback key could not be removed.', error);
+  }
+}
+
 export function saveAppData(data: AppData): Promise<'indexeddb' | 'localStorage'> {
   // Serialize writes so a slower earlier save cannot overwrite a newer edit.
   const currentSave = saveQueue.catch(() => undefined).then(async () => {
